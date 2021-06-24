@@ -112,3 +112,9 @@ if [[ $INFRASTRUCTURE_LAYER = "libvirt-local" ]]; then
   echo -e "===== Watching Libvirt Local Infrastructure deployment to reboot nodes...\n"
   source ./libvirt-restart-vms.sh
 fi
+
+# Watch for cluster initialization
+if [[ $CLUSTER_TYPE = "Standard" ]]; then
+  echo -e "===== Watching for cluster installation to complete...\n"
+  source ./apply-default-cluster-config.sh
+fi

@@ -100,6 +100,7 @@ function checkForProgramAndExit() {
 }
 
 echo -e "\n===== Checking for needed programs..."
+checkForProgramAndExit curl
 checkForProgramAndExit jq
 checkForProgramAndExit virt-install
 

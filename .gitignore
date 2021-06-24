@@ -5,3 +5,5 @@ iso-params.json
 *.nfo
 nohup.out
 .kubeconfig*
+.tmpbin
+.tmpbin/*
