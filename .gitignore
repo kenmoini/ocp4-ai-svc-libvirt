@@ -3,6 +3,7 @@ pull-secret.txt
 iso-params.json
 *.iso
 *.nfo
+*.nfo*
 nohup.out
 .kubeconfig*
 .tmpbin
