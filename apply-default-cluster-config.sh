@@ -114,7 +114,8 @@ while [ $LOOP_ON = "true" ]; do
 
   if [[ $CLUSTER_STATUS = "installed" ]]; then
     LOOP_ON="false"
-    echo -e "===== Cluster has finished installing...running cluster configuration now...\n"
+    echo -e "===== Cluster has finished installing...running cluster configuration now (after 15s)...\n"
+    sleep 15
     runClusterConfiguration
   else
     echo "===== Waiting for cluster to be fully installed and ready...waiting $CYCLE_TIME_IN_SECONDS seconds..."

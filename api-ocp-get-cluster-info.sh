@@ -6,7 +6,7 @@
 source ./cluster-vars.sh
 
 # Query the Cluster for Information around its composition
-CLUSTER_INFO_REQ=$(curl \
+CLUSTER_INFO_REQ=$(curl -s \
   --header "Content-Type: application/json" \
   --header "Accept: application/json" \
   --request GET \

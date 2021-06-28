@@ -7,7 +7,7 @@ source ./cluster-vars.sh
 
 # Start the Install
 echo "Starting OpenShift Installation..."
-START_INSTALLATION_REQ=$(curl \
+START_INSTALLATION_REQ=$(curl -s \
   --header "Content-Type: application/json" \
   --header "Accept: application/json" \
   --request POST \

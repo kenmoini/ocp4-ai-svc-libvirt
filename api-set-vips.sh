@@ -29,7 +29,7 @@ if [[ $vipDHCPEnabled = "true" ]]; then
   # Set the Hostnames and Host Roles
   echo "Setting API and Ingress VIPs..."
 
-  SET_HOST_INFO_REQ=$(curl \
+  SET_HOST_INFO_REQ=$(curl -s \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --request PATCH \

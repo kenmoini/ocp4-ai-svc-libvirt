@@ -45,7 +45,7 @@ EOF
 
 # Set the Hostnames and Host Roles
 echo "Setting Host information..."
-SET_HOST_INFO_REQ=$(curl \
+SET_HOST_INFO_REQ=$(curl -s \
   --header "Content-Type: application/json" \
   --header "Accept: application/json" \
   --request PATCH \

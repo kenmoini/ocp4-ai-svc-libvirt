@@ -48,8 +48,8 @@ while [ $LOOP_ON = "true" ]; do
   if [ '0' -eq "${#VM_ARR[@]}" ]; then
     LOOP_ON="false"
     echo "========= All Cluster VMs have been restarted!"
-    exit
+  else
+    echo "========= Still waiting on ${#VM_ARR[@]} VMs: ${VM_ARR[@]}"
+    sleep 10
   fi
-  echo "========= Still waiting on ${#VM_ARR[@]} VMs: ${VM_ARR[@]}"
-  sleep 10
 done
