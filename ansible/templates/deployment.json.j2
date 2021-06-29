@@ -13,6 +13,6 @@
   "high_availability_mode": "Full",
   "host_networks": [],
   "hosts": [],
-  "ssh_public_key": "{{ lookup('file', ssh_pub_key_path) }}",
-  "pull_secret": $PULL_SECRET
+  "ssh_public_key": "{{ ssh_public_key }}",
+  "pull_secret": {{ pull_secret }}
 }
