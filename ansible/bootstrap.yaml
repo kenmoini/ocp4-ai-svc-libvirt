@@ -33,7 +33,7 @@
       loop: "{{ read_clusters.content }}"
       when: ("{{ item.base_dns_domain }}" == "{{ cluster_domain }}") and ("{{ item.name }}" == "{{ cluster_name }}")
 
-    # y tho?
+    # y tho? oh yeah, if importing, duh lololo
     - name: Create Cluster Asset Generation Directory
       file:
         path: "{{ generated_asset_directory }}/{{ cluster_id }}"
