@@ -1,0 +1,29 @@
+dns-resolver:
+  config:
+    server:
+    - 192.168.126.1
+interfaces:
+- ipv4:
+    address:
+    - ip: 192.168.126.30
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  name: eth0
+  state: up
+  type: ethernet
+- ipv4:
+    address:
+    - ip: 192.168.141.30
+      prefix-length: 24
+    dhcp: false
+    enabled: true
+  name: eth1
+  state: up
+  type: ethernet
+routes:
+  config:
+  - destination: 0.0.0.0/0
+    next-hop-address: 192.168.126.1
+    next-hop-interface: eth0
+    table-id: 254

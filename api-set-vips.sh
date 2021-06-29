@@ -35,4 +35,6 @@ if [[ $vipDHCPEnabled = "true" ]]; then
     --request PATCH \
     --data "$(generatePatchData)" \
   "http://$ASSISTED_SERVICE_IP:$ASSISTED_SERVICE_PORT/api/assisted-install/v1/clusters/$CLUSTER_ID")
+
+  printf '%s' "$SET_HOST_INFO_REQ" | python3 -m json.tool
 fi

@@ -1,0 +1,24 @@
+---
+- name: Check for required programs (even tho we don't need to anymore lololo)
+  ansible.builtin.shell: "which {{ item }}"
+  register: program_check
+  ignore_errors: true
+  with_items:
+    - virt-install
+    - curl
+    - jq
+    - git
+  
+- name: Fail if needed programs are not found
+  fail:
+    msg: "{{ item.cmd | replace('which ','') }} is not found! You need to install it first."
+  failed_when: item.rc != 0
+  loop: "{{ program_check.results }}"
+  loop_control:
+    label: "{{ item.cmd | replace('which ','') }}"
+
+- name: Create generation directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ generated_asset_directory }}"
+    mode: '0755'

@@ -1,0 +1,13 @@
+---
+- name: Set Calico Networking Cluster Preconfig
+  uri:
+    url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/install-config"
+    return_content: yes
+    method: PATCH
+    body: '{"networking":{"networkType":"Calico"}}'
+    status_code: 201
+    body_format: json
+    headers:
+      Content-Type: application/json
+  register: set_cluster_preconfig_networking_calico
+  when: cluster_network_type == "Calico"

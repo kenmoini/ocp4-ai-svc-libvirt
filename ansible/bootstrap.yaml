@@ -1,0 +1,53 @@
+---
+- name: Create an Assisted Installer provisioned OpenShift Cluster on Libvirt/KVM
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    cluster_id: ""
+    cluster_status: ""
+
+  tasks:
+    - name: Read in variables
+      include_vars:
+        dir: vars
+        extensions:
+          - 'yaml'
+          - 'yml'
+
+    - name: Preflight Checks
+      include_tasks: tasks/preflight.yaml
+
+    - name: Read AI Service, check for existing cluster
+      uri:
+        url: "{{ assisted_service_endpoint }}/clusters"
+        return_content: yes
+        method: GET
+      register: read_clusters
+    
+    - name: Set facts if cluster exists
+      set_fact:
+        cluster_id: "{{ item.id }}"
+        cluster_status: "{{ item.status }}"
+      loop: "{{ read_clusters.content }}"
+      when: ("{{ item.base_dns_domain }}" == "{{ cluster_domain }}") and ("{{ item.name }}" == "{{ cluster_name }}")
+
+    # y tho?
+    - name: Create Cluster Asset Generation Directory
+      file:
+        path: "{{ generated_asset_directory }}/{{ cluster_id }}"
+        state: directory
+      when: cluster_id != ""
+
+    - name: SSH Key Handling
+      include_tasks: tasks/ssh_keys.yaml
+
+    - name: Create Cluster if it does not already exist
+      block:
+        - name: Create the base cluster deployment definition
+          include_tasks: tasks/ai_svc_create_cluster.yaml
+
+        - name: Patch in Cluster Preconfiguration for Networking
+          include_tasks: tasks/ai_svc_preconfig_networking.yaml
+      when: cluster_id == ""

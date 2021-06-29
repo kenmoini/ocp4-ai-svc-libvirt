@@ -1,0 +1,16 @@
+---
+### This file contains the details for what OCP 4 Assisted Installer endpoint will be coordinated with
+# assisted_service_fqdn: api.openshift.com or your custom assisted-installer FQDN
+assisted_service_fqdn: assisted-installer.kemo.labs
+# assisted_service_port: 443 for the RH Cloud or whatever your custom assisted-installer service is running at
+assisted_service_port: 8090
+# assisted_service_transport: http or https
+assisted_service_transport: http
+
+# rh_api_token: If using the RH Cloud Assisted Installer service, you will need an API Token from this page: https://cloud.redhat.com/openshift/token
+rh_api_token: someLongString
+
+
+################################################### DO NOT EDIT PAST THIS LINE
+assisted_service_api_base: /api/assisted-install/v1
+assisted_service_endpoint: "{{ assisted_service_transport }}://{{ assisted_service_fqdn }}:{{ assisted_service_port }}{{ assisted_service_api_base }}"

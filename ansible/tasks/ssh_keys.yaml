@@ -1,0 +1,6 @@
+- name: Generate per-cluster SSH key if needed
+  block:
+    - name: Create the key pair
+      community.crypto.openssh_keypair:
+        path: "{{ generated_asset_directory }}/{{ cluster_id }}/cluster_key"
+  when: generate_ssh_key|bool

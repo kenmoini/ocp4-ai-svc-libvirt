@@ -22,6 +22,8 @@ CLUSTER_DOMAIN="kemo.labs"
 CLUSTER_API_VIP="192.168.42.76" # an IP or "auto"
 CLUSTER_LOAD_BALANCER_VIP="192.168.42.77" # an IP or "auto"
 CLUSTER_MACHINE_CIDR="192.168.42.0/24" # A CIDR definition or "auto"
+CLUSTER_NODE_NETWORK_IPAM="manual" # dhcp or static
+CLUSTER_NODE_NETWORK_MANUAL_DNS_SERVERS=("192.168.42.9" "192.168.42.10")
 CLUSTER_CIDR_NET="10.128.0.0/14"
 CLUSTER_CIDR_SVC="172.30.0.0/16"
 CLUSTER_HOST_PFX="23"
@@ -67,6 +69,13 @@ LIBVIRT_USER="root"
 
 LOG_FILE="./.local-ocp-ai.log"
 
+if [[ $INFRASTRUCTURE_LAYER = "libvirt" ]]; then
+  LIBVIRT_URI="${LIBVIRT_TRANSPORT_TYPE}://${LIBVIRT_USER}@${LIBVIRT_ENDPOINT}/system?no_verify=1&socket=/var/run/libvirt/libvirt-sock"
+fi
+if [[ $INFRASTRUCTURE_LAYER = "libvirt-local" ]]; then
+  LIBVIRT_URI="qemu:///system"
+fi
+
 LIBVIRT_MAC_PREFIX="54:52:00:42:69:"
 LIBVIRT_REMOTE_ISO_PATH="/mnt/nvme_7TB/nfs/isos"
 LIBVIRT_VM_PATH="/mnt/nvme_7TB/nfs/vms/raza"
@@ -80,13 +89,6 @@ fi
 if [[ $CLUSTER_TYPE = "SNO" ]]; then
   CLUSTER_VERSION="4.8.0-rc.0"
   CLUSTER_IMAGE="quay.io/openshift-release-dev/ocp-release:4.8.0-rc.0-x86_64"
-fi
-
-if [[ $INFRASTRUCTURE_LAYER = "libvirt" ]]; then
-  LIBVIRT_URI="${LIBVIRT_TRANSPORT_TYPE}://${LIBVIRT_USER}@${LIBVIRT_ENDPOINT}/system?no_verify=1&socket=/var/run/libvirt/libvirt-sock"
-fi
-if [[ $INFRASTRUCTURE_LAYER = "libvirt-local" ]]; then
-  LIBVIRT_URI="qemu:///system"
 fi
 
 function checkForProgramAndExit() {

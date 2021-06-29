@@ -8,3 +8,4 @@ nohup.out
 .kubeconfig*
 .tmpbin
 .tmpbin/*
+.generated/
