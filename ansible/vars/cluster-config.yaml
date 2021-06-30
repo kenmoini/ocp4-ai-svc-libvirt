@@ -40,8 +40,9 @@ cluster_node_network_static_dns_servers:
   - 192.168.42.10
 cluster_node_network_static_dns_search_domains:
   - kemo.labs
-cluster_node_network_static_interfaces:
+cluster_nodes:
   - name: cp-1
+    type: control-plane
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:01
@@ -55,6 +56,7 @@ cluster_node_network_static_interfaces:
             next_hop_interface: eth0
             table_id: 254
   - name: cp-2
+    type: control-plane
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:02
@@ -68,6 +70,7 @@ cluster_node_network_static_interfaces:
             next_hop_interface: eth0
             table_id: 254
   - name: cp-3
+    type: control-plane
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:03
@@ -81,6 +84,7 @@ cluster_node_network_static_interfaces:
             next_hop_interface: eth0
             table_id: 254
   - name: app-1
+    type: application-node
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:04
@@ -94,6 +98,7 @@ cluster_node_network_static_interfaces:
             next_hop_interface: eth0
             table_id: 254
   - name: app-2
+    type: application-node
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:05
@@ -107,6 +112,7 @@ cluster_node_network_static_interfaces:
             next_hop_interface: eth0
             table_id: 254
   - name: app-3
+    type: application-node
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:06

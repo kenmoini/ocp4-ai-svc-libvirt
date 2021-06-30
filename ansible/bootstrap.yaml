@@ -84,5 +84,24 @@
           
       when: deployment_name != ""
 
+    - name: Download ISO if needed
+      block:
+        - name: Check for existing ISO
+          ansible.builtin.stat:
+            path: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
+          register: iso_check
 
-    #- name: Pull OpenShift ISO if needed
+        - name: Pull OpenShift ISO if needed
+          get_url:
+            url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/downloads/image"
+            dest: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
+          when: not iso_check.stat.exists
+
+    - name: Create Libvirt Infrastructure
+      block:
+
+      - name: Create Disks via QEMU
+        include_tasks: libvirt_create_disks.yaml
+
+      - name: Create VMs via Libvirt
+        include_tasks: libvirt_create_vms.yaml

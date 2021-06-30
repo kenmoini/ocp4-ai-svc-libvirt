@@ -1,0 +1,7 @@
+---
+- name: Create disk images for OCP Control Plane Nodes
+  command:
+  args:
+    creates: 
+  loop:
+- name: Create disk images for OCP Application Nodes
