@@ -50,4 +50,7 @@
 
         - name: Patch in Cluster Preconfiguration for Networking
           include_tasks: tasks/ai_svc_preconfig_networking.yaml
+
       when: cluster_id == ""
+
+    - name: Pull OpenShift ISO if needed
