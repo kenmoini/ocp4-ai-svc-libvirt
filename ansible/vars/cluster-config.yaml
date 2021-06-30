@@ -7,7 +7,7 @@ ssh_pub_key_path: "~/.ssh/id_rsa.pub"
 
 ################################################## OpenShift Pull Secret
 # pull_secret: Often best to pull from a file outside of the repo - get it from here: https://cloud.redhat.com/openshift/install/pull-secret
-pull_secret: "{{ lookup('file', '~/pull-secret.txt') }}"
+pull_secret: "{{ lookup('file', '~/pull-secret.txt') | to_json }}"
 
 ################################################## Cluster Basics
 # cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
@@ -15,7 +15,7 @@ cluster_type: Standard
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,apps,*.apps}.cluster_name.cluster_domain exist
-cluster_name: core-ocp
+cluster_name: core-ocp1
 cluster_domain: kemo.labs
 
 cluster_version: 4.7.9
@@ -45,74 +45,80 @@ cluster_node_network_static_interfaces:
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:01
+        dhcp: false
         ipv4:
           - address: 192.168.42.80
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
-            next-hop-address: 192.168.42.1
-            next-hop-interface: eth0
-            table-id: 254
+            next_hop_address: 192.168.42.1
+            next_hop_interface: eth0
+            table_id: 254
   - name: cp-2
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:02
+        dhcp: false
         ipv4:
           - address: 192.168.42.81
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
-            next-hop-address: 192.168.42.1
-            next-hop-interface: eth0
-            table-id: 254
+            next_hop_address: 192.168.42.1
+            next_hop_interface: eth0
+            table_id: 254
   - name: cp-3
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:03
+        dhcp: false
         ipv4:
           - address: 192.168.42.82
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
-            next-hop-address: 192.168.42.1
-            next-hop-interface: eth0
-            table-id: 254
+            next_hop_address: 192.168.42.1
+            next_hop_interface: eth0
+            table_id: 254
   - name: app-1
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:04
+        dhcp: false
         ipv4:
           - address: 192.168.42.83
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
-            next-hop-address: 192.168.42.1
-            next-hop-interface: eth0
-            table-id: 254
+            next_hop_address: 192.168.42.1
+            next_hop_interface: eth0
+            table_id: 254
   - name: app-2
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:05
+        dhcp: false
         ipv4:
           - address: 192.168.42.84
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
-            next-hop-address: 192.168.42.1
-            next-hop-interface: eth0
-            table-id: 254
+            next_hop_address: 192.168.42.1
+            next_hop_interface: eth0
+            table_id: 254
   - name: app-3
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:06
+        dhcp: false
         ipv4:
           - address: 192.168.42.85
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
-            next-hop-address: 192.168.42.1
-            next-hop-interface: eth0
-            table-id: 254
+            next_hop_address: 192.168.42.1
+            next_hop_interface: eth0
+            table_id: 254
 
 ################################################## DO NOT EDIT PAST THIS LINE (unless you know what you're doing)
 cluster_network_cidr: 10.128.0.0/14

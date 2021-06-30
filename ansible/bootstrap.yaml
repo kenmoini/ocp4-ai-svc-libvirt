@@ -7,6 +7,7 @@
   vars:
     cluster_id: ""
     cluster_status: ""
+    deployment_name: ""
 
   tasks:
     - name: Read in variables
@@ -30,8 +31,8 @@
       set_fact:
         cluster_id: "{{ item.id }}"
         cluster_status: "{{ item.status }}"
-      loop: "{{ read_clusters.content }}"
-      when: ("{{ item.base_dns_domain }}" == "{{ cluster_domain }}") and ("{{ item.name }}" == "{{ cluster_name }}")
+      loop: "{{ read_clusters.json }}"
+      when: (item.base_dns_domain == cluster_domain) and (item.name == cluster_name)
 
     # y tho? oh yeah, if importing, duh lololo
     - name: Create Cluster Asset Generation Directory
@@ -40,17 +41,47 @@
         state: directory
       when: cluster_id != ""
 
-    - name: SSH Key Handling
-      include_tasks: tasks/ssh_keys.yaml
-
     - name: Create Cluster if it does not already exist
       block:
+        - name: Set random var for this deployment json run
+          set_fact:
+            deployment_name: "{{ lookup('password', '/dev/null chars=ascii_lowercase,digits length=8') }}"
+
+        - name: SSH Key Generation & Reading
+          include_tasks: tasks/ssh_keys.yaml
+
         - name: Create the base cluster deployment definition
           include_tasks: tasks/ai_svc_create_cluster.yaml
+      when: cluster_id == ""
+
+    - name: Set Cluster Configuration
+      block:
+
+        - name: Create Cluster Asset Generation Directory
+          file:
+            path: "{{ generated_asset_directory }}/{{ cluster_id }}"
+            state: directory
+
+        - name: Copy deployment file into cluster directory
+          copy:
+            remote_src: true
+            src: "{{ generated_asset_directory }}/deployment-{{ deployment_name }}.json"
+            dest: "{{ generated_asset_directory }}/{{ cluster_id }}/deployment.json"
+
+        - name: Remove old named deployment.json
+          file:
+            path: "{{ generated_asset_directory }}/deployment-{{ deployment_name }}.json"
+            state: absent
+
+        - name: SSH Key Migration
+          include_tasks: tasks/ssh_keys.yaml
 
         - name: Patch in Cluster Preconfiguration for Networking
           include_tasks: tasks/ai_svc_preconfig_networking.yaml
 
-      when: cluster_id == ""
+        - name: Configure ISO Parameters
+          include_tasks: tasks/ai_svc_configure_iso_params.yaml
+      when: deployment_name != ""
 
-    - name: Pull OpenShift ISO if needed
+
+    #- name: Pull OpenShift ISO if needed

@@ -1,0 +1,25 @@
+---
+
+- name: Create an Assisted Installer provisioned OpenShift Cluster on Libvirt/KVM
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    cluster_id: ""
+    cluster_status: ""
+    deployment_name: ""
+
+  tasks:
+    - name: Read in variables
+      include_vars:
+        dir: vars
+        extensions:
+          - 'yaml'
+          - 'yml'
+
+    - name: Template example
+      debug:
+        msg: "{{ rendered_template.split('\n') }}"
+      vars:
+        rendered_template: "{{ lookup('template', 'templates/static_networking_config.json.j2') }}"

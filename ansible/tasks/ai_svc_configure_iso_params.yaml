@@ -1,0 +1,5 @@
+---
+- name: Template out ISO Params
+  template:
+    src: templates/iso_params.json.j2
+    dest: "{{ generated_asset_directory }}/{{ cluster_id }}/iso_params.json"

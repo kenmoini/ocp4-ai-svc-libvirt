@@ -1,4 +1,5 @@
 {
   "ssh_public_key": "{{ ssh_public_key }}",
-  "pull_secret": {{ pull_secret }}
+  "pull_secret": {{ pull_secret }},
+  "image_type": "full-iso"{{ (cluster_node_network_ipam == 'static') | ternary(',\n'+static_networking_preconfig, '', omit) }}
 }

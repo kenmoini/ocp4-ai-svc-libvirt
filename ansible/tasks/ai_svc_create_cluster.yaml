@@ -1,7 +1,4 @@
 ---
-- name: Set random var for this deployment json run
-  set_fact:
-    deployment_name: "{{ lookup('password', '/dev/null chars=ascii_lowercase,digits length=8') }}"
 
 - name: Template out the deployment.json file
   template:
@@ -22,23 +19,6 @@
 
 - name: Set facts for Cluster
   set_fact:
-    cluster_id: "{{ item.id }}"
-    cluster_status: "{{ item.status }}"
-  loop: "{{ create_cluster.content }}"
-  when: ("{{ item.base_dns_domain }}" == "{{ cluster_domain }}") and ("{{ item.name }}" == "{{ cluster_name }}")
-
-- name: Create Cluster Asset Generation Directory
-  file:
-    path: "{{ generated_asset_directory }}/{{ cluster_id }}"
-    state: directory
-
-- name: Copy deployment file into cluster directory
-  copy:
-    remote_src: true
-    src: "{{ generated_asset_directory }}/deployment-{{ deployment_name }}.json"
-    dest: "{{ generated_asset_directory }}/{{ cluster_id }}/deployment.json"
-
-- name: Remove old named deployment.json
-  file:
-    path: "{{ generated_asset_directory }}/deployment-{{ deployment_name }}.json"
-    state: absent
+    cluster_id: "{{ create_cluster.json.id }}"
+    cluster_status: "{{ create_cluster.json.status }}"
+  when: (create_cluster.json.base_dns_domain == cluster_domain) and (create_cluster.json.name == cluster_name)
