@@ -81,6 +81,7 @@
 
         - name: Configure ISO Parameters
           include_tasks: tasks/ai_svc_configure_iso_params.yaml
+          
       when: deployment_name != ""
 
 

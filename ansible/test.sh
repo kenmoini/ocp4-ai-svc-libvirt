@@ -3,7 +3,7 @@
 NODE_SSH_KEY="..."
 request_body=$(mktemp)
 
-jq -n --arg SSH_KEY "$NODE_SSH_KEY" --arg NMSTATE_YAML1 "$(cat templates/host_static_networking.yaml.j2)" \
+jq -n --arg SSH_KEY "$NODE_SSH_KEY" --arg NMSTATE_YAML1 "$(cat .generated/2869116a-f943-4d34-8841-ffd8ba95c0c2/iso_params.json)" \
 '{
   "ssh_public_key": $SSH_KEY,
   "image_type": "full-iso",
