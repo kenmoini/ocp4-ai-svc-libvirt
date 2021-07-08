@@ -10,7 +10,7 @@
   "service_network_cidr": "{{ cluster_service_cidr }}",
   "user_managed_networking": false,
   "vip_dhcp_allocation": false,
-  "high_availability_mode": "Full",
+  "high_availability_mode": "{{ (cluster_type == 'Standard') | ternary('Full', 'None') }}",
   "host_networks": [],
   "hosts": [],
   "ssh_public_key": "{{ ssh_public_key }}",
