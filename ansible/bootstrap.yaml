@@ -101,7 +101,9 @@
       block:
 
       - name: Create Disks via QEMU
-        include_tasks: libvirt_create_disks.yaml
+        include_tasks: tasks/libvirt_create_disks.yaml
 
-      - name: Create VMs via Libvirt
-        include_tasks: libvirt_create_vms.yaml
+      #- name: Create VMs via Libvirt
+      #  include_tasks: libvirt_create_vms.yaml
+      #  become: yes
+      become: yes
