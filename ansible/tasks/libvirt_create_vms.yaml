@@ -1,0 +1,18 @@
+---
+- name: Create OpenShift VMs on Libvirt Host
+  community.libvirt.virt:
+    command: define
+    xml: "{{ lookup('template', 'templates/kvm_libvirt_vm.xml.j2') }}"
+    uri: "{{ libvirt_uri }}"
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Boot the OpenShift VMs
+  community.libvirt.virt:
+    name: "{{ item.name }}"
+    state: running
+    uri: "{{ libvirt_uri }}"
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    label: "{{ item.name }}"

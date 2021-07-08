@@ -5,4 +5,4 @@
     creates: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
   loop: "{{ cluster_nodes }}"
   loop_control:
-    label: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+    label: "{{ item.name }} @ {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"

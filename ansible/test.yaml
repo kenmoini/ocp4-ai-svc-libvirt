@@ -18,8 +18,13 @@
           - 'yaml'
           - 'yml'
 
-    - name: Template example
-      debug:
-        msg: "{{ rendered_template.split('\n') }}"
-      vars:
-        rendered_template: "{{ lookup('template', 'templates/static_networking_config.json.j2') }}"
+    - name: Pull XML
+      community.libvirt.virt:
+        command: get_xml
+        name: core-ocp-ocp-cp-1
+      register: xml_return
+
+    - name: d
+      copy:
+        content: "{{ xml_return.get_xml }}"
+        dest: vm.xml

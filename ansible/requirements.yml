@@ -1,4 +1,4 @@
 ---
 collections:
   - community.crypto
-  - community.libvirt.virt
+  - community.libvirt
