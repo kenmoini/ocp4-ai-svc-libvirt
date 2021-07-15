@@ -5,7 +5,7 @@
 
 - name: Set empty facts
   set_fact:
-    newly_shutdown_vms: []
+    newly_shutdown_vms: "{{ task_shutdown_vms }}"
 
 - name: Get Shutdown VMs
   #shell: "virsh list --state-shutoff --name | grep '{{ cluster_name }}' | true"
@@ -20,7 +20,7 @@
 
 - name: Add the VM to the shutdown VMs list
   set_fact:
-    newly_shutdown_vms: "{{ task_shutdown_vms + [item] }}"
+    newly_shutdown_vms: "{{ newly_shutdown_vms + [item] }}"
   loop: "{{ shutdown_vms_cmd.stdout_lines }}"
   when: item in task_vm_names
 

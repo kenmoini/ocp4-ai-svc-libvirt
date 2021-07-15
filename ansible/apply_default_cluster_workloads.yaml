@@ -1,0 +1,49 @@
+---
+- name: Clone down repo source
+  git:
+    clone: yes
+    update: yes
+    force: yes
+    repo: 'https://github.com/kenmoini/homelab.git'
+    dest: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/"
+
+- name: Run old fasioned oc CLI commands
+  block:
+  - name: Log into the cluster
+    shell:
+      cmd: "oc login {{ cluster_api_url }} --password=\"{{ cluster_kubeadmin_password }}\" --username=\"{{ cluster_kubeadmin_username }}\" --insecure-skip-tls-verify=true"
+    #community.okd.openshift_auth:
+    #  username: "{{ cluster_kubeadmin_username }}"
+    #  password: "{{ cluster_kubeadmin_password }}"
+    #  host: "{{ cluster_api_url }}"
+    #  validate_certs: false
+    #register: openshift_auth_results
+
+  - name: Run Matrix Login script
+    shell:
+      cmd: "./run.sh"
+      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/matrix-login/"
+
+  - name: Run NFS Registry Script
+    shell:
+      cmd: "./run.sh"
+      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-registry/"
+    environment:
+      NFS_PATH: "/nfs/ocpreg/{{ cluster_name }}"
+
+  - name: Run NFS StorageClass Script
+    shell:
+      cmd: "./run.sh"
+      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-storageclass/"
+    environment:
+      NFS_PATH: "/nfs/ocp/{{ cluster_name }}"
+
+  always:
+  - name: Log out of the cluster
+    shell:
+      cmd: oc logout
+
+- name: Delete cloned repo
+  file:
+    state: absent
+    path: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/"

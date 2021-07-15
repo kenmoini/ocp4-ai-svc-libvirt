@@ -2,3 +2,5 @@
 collections:
   - community.crypto
   - community.libvirt
+  - community.okd
+  - kubernetes.core

@@ -16,3 +16,6 @@ libvirt_network:
 ######################### Storage Options
 libvirt_base_iso_path: /mnt/nvme_7TB/nfs/isos
 libvirt_base_vm_path: /mnt/nvme_7TB/nfs/vms/raza
+
+######################### General Options
+libvirt_watch_for_vm_restart: false

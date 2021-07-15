@@ -138,11 +138,6 @@
         set_fact:
           vm_names: "{{ vm_names + [cluster_name+'-'+item.name] }}"
         loop: "{{ cluster_nodes }}"
-
-      - name: d
-        debug:
-          msg: "{{ item }}"
-        loop: "{{ vm_names }}"
         
       - name: Check for Libvirt VM Rebooting
         include_tasks: tasks/libvirt_reboot_vms.yaml
@@ -150,3 +145,13 @@
           task_vm_names: "{{ vm_names }}"
           task_shutdown_vms: "{{ shutdown_vms }}"
       become: yes
+      when: libvirt_watch_for_vm_restart|bool
+
+    - name: Wait for the cluster to be fully installed
+      include_tasks: tasks/ai_svc_check_cluster_install_finished.yaml
+
+    - name: Pull cluster credentials
+      include_tasks: tasks/ai_svc_query_cluster_credentials.yaml
+
+    - name: Deploy default cluster workloads
+      include_tasks: apply_default_cluster_workloads.yaml
