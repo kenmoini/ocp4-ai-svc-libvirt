@@ -97,6 +97,11 @@
             dest: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
           when: not iso_check.stat.exists
 
+        - name: Copy OpenShift ISO to target Libvirt path
+          copy:
+            src: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
+            dest: "{{ libvirt_base_iso_path }}/ocp_ai-{{ cluster_id }}.iso"
+
     - name: Create Libvirt Infrastructure
       block:
       - name: Create Disks via QEMU
@@ -104,4 +109,44 @@
 
       - name: Create VMs via Libvirt
         include_tasks: tasks/libvirt_create_vms.yaml
+      become: yes
+      
+    - name: Wait for hosts to report into the Assisted Installer service
+      include_tasks: tasks/ai_svc_check_for_hosts.yaml
+
+    - name: Set Host Names and Roles for Standard HA OpenShift Cluster
+      include_tasks: tasks/ai_svc_set_host_names_roles.yaml
+      when: cluster_type == "Standard"
+
+    - name: Set Network VIPs
+      include_tasks: tasks/ai_svc_set_vips.yaml
+
+    - name: Check to make sure the hosts are ready and the cluster can be installed
+      include_tasks: tasks/ai_svc_check_install_ready.yaml
+
+    - name: Start the Cluster installation
+      include_tasks: tasks/ai_svc_start_install.yaml
+
+    - name: Reboot Libvirt VMs
+      block:
+      - name: Set blank fact for VM list
+        set_fact:
+          vm_names: []
+          shutdown_vms: []
+
+      - name: Add VM Names to fact
+        set_fact:
+          vm_names: "{{ vm_names + [cluster_name+'-'+item.name] }}"
+        loop: "{{ cluster_nodes }}"
+
+      - name: d
+        debug:
+          msg: "{{ item }}"
+        loop: "{{ vm_names }}"
+        
+      - name: Check for Libvirt VM Rebooting
+        include_tasks: tasks/libvirt_reboot_vms.yaml
+        vars:
+          task_vm_names: "{{ vm_names }}"
+          task_shutdown_vms: "{{ shutdown_vms }}"
       become: yes

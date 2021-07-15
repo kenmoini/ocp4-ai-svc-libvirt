@@ -19,12 +19,12 @@
           - 'yml'
 
     - name: Pull XML
-      community.libvirt.virt:
+      community.libvirt.virt_net:
         command: get_xml
-        name: core-ocp-ocp-cp-1
+        name: lanBridge
       register: xml_return
 
     - name: d
       copy:
         content: "{{ xml_return.get_xml }}"
-        dest: vm.xml
+        dest: net.xml

@@ -15,7 +15,7 @@ cluster_type: Standard
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,apps,*.apps}.cluster_name.cluster_domain exist
-cluster_name: core-ocp1
+cluster_name: play-ocp
 cluster_domain: kemo.labs
 
 cluster_version: 4.7.9
@@ -25,9 +25,9 @@ cluster_image: quay.io/openshift-release-dev/ocp-release:4.7.9-x86_64
 # cluster_network_type = Default, Cillium, or Calico
 cluster_network_type: Default
 # cluster_api_vip: an IP or "auto"
-cluster_api_vip: 192.168.42.76
+cluster_api_vip: 192.168.42.74
 # cluster_load_balancer_vip: an IP or "auto"
-cluster_load_balancer_vip: 192.168.42.77
+cluster_load_balancer_vip: 192.168.42.75
 # cluster_node_cidr: A CIDR definition or "auto"
 cluster_node_cidr: 192.168.42.0/24
 

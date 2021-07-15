@@ -1,0 +1,45 @@
+---
+- name: Wait for 30s
+  wait_for:
+    timeout: 10
+
+- name: Set empty facts
+  set_fact:
+    newly_shutdown_vms: []
+
+- name: Get Shutdown VMs
+  #shell: "virsh list --state-shutoff --name | grep '{{ cluster_name }}' | true"
+  shell: "virsh list --state-shutoff --name"
+  register: shutdown_vms_cmd
+
+- name: Start the shutdown VM
+  community.libvirt.virt:
+    name: "{{ item }}"
+    state: running
+  loop: "{{ shutdown_vms_cmd.stdout_lines }}"
+
+- name: Add the VM to the shutdown VMs list
+  set_fact:
+    newly_shutdown_vms: "{{ task_shutdown_vms + [item] }}"
+  loop: "{{ shutdown_vms_cmd.stdout_lines }}"
+  when: item in task_vm_names
+
+- name: Debug how many task_vm_names there are
+  debug:
+    msg: "{{ item }}"
+  loop: "{{ task_vm_names }}"
+
+- name: Debug how many VMs there are
+  debug:
+    msg: "Total: {{ task_vm_names|length }}, Rebooted: {{ newly_shutdown_vms|length }}"
+
+- name: Debug how many newly_shutdown_vms there are
+  debug:
+    msg: "{{ item }}"
+  loop: "{{ newly_shutdown_vms }}"
+
+- name: INCEPTION
+  include_tasks: tasks/libvirt_reboot_vms.yaml
+  vars:
+    task_shutdown_vms: "{{ newly_shutdown_vms }}"
+  when: task_vm_names|length != task_shutdown_vms|length

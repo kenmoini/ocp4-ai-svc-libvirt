@@ -15,7 +15,3 @@
     headers:
       Content-Type: application/json
   register: set_cluster_iso_params
-
-- name: d
-  debug:
-    msg: "{{ set_cluster_iso_params }}"

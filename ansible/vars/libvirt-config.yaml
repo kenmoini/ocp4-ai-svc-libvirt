@@ -1,7 +1,10 @@
 ---
 ######################### Local libvirt options
 libvirt_uri: "qemu:///system"
-libvirt_network: "bridge=containerLANbr0,model=virtio"
+libvirt_network:
+  type: bridge
+  name: containerLANbr0
+  model: virtio
 
 ######################### Remote libvirt Options
 #libvirt_endpoint: raza.kemo.labs

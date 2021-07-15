@@ -1,4 +1,12 @@
 ---
+- name: Template Libvirt VM XML files for debug purposes
+  template:
+    src: templates/kvm_libvirt_vm.xml.j2
+    dest: "{{ generated_asset_directory }}/{{ cluster_id }}/kvm_vm.{{ item.name }}.xml"
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Create OpenShift VMs on Libvirt Host
   community.libvirt.virt:
     command: define
@@ -10,7 +18,7 @@
 
 - name: Boot the OpenShift VMs
   community.libvirt.virt:
-    name: "{{ item.name }}"
+    name: "{{ cluster_name }}-{{ item.name }}"
     state: running
     uri: "{{ libvirt_uri }}"
   loop: "{{ cluster_nodes }}"

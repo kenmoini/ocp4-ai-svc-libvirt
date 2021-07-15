@@ -1,0 +1,53 @@
+---
+
+- name: Set appropriate next steps
+  set_fact:
+    valid_next_steps:
+      - insufficient
+      - ready
+      - pending-for-input
+      - adding-hosts
+
+- name: Ensure the cluster is in a valid state to set names and roles
+  uri:
+    url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}"
+    return_content: yes
+    method: GET
+    status_code: 200
+    body_format: json
+    headers:
+      Content-Type: application/json
+  register: cluster_current_status
+
+- name: Set the Host names and roles
+  block:
+    - name: Get the list of hosts from the API
+      uri:
+        url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/hosts"
+        return_content: yes
+        method: GET
+        status_code: 200
+        headers:
+          Content-Type: application/json
+      register: ai_svc_list_of_hosts
+
+    - name: Template out the JSON for the Host Names and Roles
+      template:
+        src: templates/host_names_and_roles.json.j2
+        dest: "{{ generated_asset_directory }}/{{ cluster_id }}/host_names_roles.json"
+
+    - name: Patch the Assisted Installer API with the host names and roles
+      uri:
+        url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}"
+        return_content: yes
+        method: PATCH
+        body: "{{ lookup('file', generated_asset_directory +'/'+ cluster_id +'/host_names_roles.json') }}"
+        status_code: 201
+        body_format: json
+        headers:
+          Content-Type: application/json
+
+    - name: Pause for 5 seconds to let the API catch up
+      wait_for:
+        timeout: 5
+  when: cluster_current_status.json.status in valid_next_steps
