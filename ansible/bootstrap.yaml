@@ -20,6 +20,9 @@
     - name: Preflight Checks
       include_tasks: tasks/preflight.yaml
 
+    - name: Preflight Version Checks
+      include_tasks: tasks/ai_svc_query_openshift_versions.yaml
+
     - name: Read AI Service, check for existing cluster
       uri:
         url: "{{ assisted_service_endpoint }}/clusters"
@@ -153,5 +156,8 @@
     - name: Pull cluster credentials
       include_tasks: tasks/ai_svc_query_cluster_credentials.yaml
 
-    - name: Deploy default cluster workloads
-      include_tasks: apply_default_cluster_workloads.yaml
+    - name: Deploy default post-installation cluster workloads
+      include_tasks: "{{ item }}"
+      with_fileglob:
+        - post-tasks/*.yml
+        - post-tasks/*.yaml

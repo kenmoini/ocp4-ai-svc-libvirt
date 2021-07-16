@@ -1,0 +1,29 @@
+---
+- name: Get the health of the endpoints
+  uri:
+    url: "https://{{ item.bmc_address }}/redfish/v1/Systems/System.Embedded.1"
+    return_content: yes
+    method: GET
+    status_code: 200
+    body_format: json
+    headers:
+      Content-Type: application/json
+  register: host_bmc_status
+
+- name: Debug status
+  debug:
+    msg: "{{ host_bmc_status }}"
+
+- name: Insert Virtual Media
+  community.general.redfish_command:
+    category: Manager
+    command: VirtualMediaInsert
+    baseuri: "{{ baseuri }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    virtual_media:
+      image_url: 'http://example.com/images/SomeLinux-current.iso'
+      media_types:
+        - CD
+        - DVD
+    resource_id: BMC

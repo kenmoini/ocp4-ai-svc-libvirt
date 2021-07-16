@@ -18,13 +18,20 @@
           - 'yaml'
           - 'yml'
 
-    - name: Pull XML
-      community.libvirt.virt_net:
-        command: get_xml
-        name: lanBridge
-      register: xml_return
+    - name: query API versions
+      uri:
+        url: "{{ assisted_service_endpoint }}/openshift_versions"
+        return_content: yes
+        method: GET
+        status_code: 200
+        body_format: json
+        headers:
+          Content-Type: application/json
+      register: test_status
 
     - name: d
-      copy:
-        content: "{{ xml_return.get_xml }}"
-        dest: net.xml
+      debug:
+        msg: "{{ (test_status.json).keys()|list }}"
+      
+    - name: inc
+      include_tasks: tasks/ai_svc_query_openshift_versions.yaml
