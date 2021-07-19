@@ -12,10 +12,10 @@
 
 - name: Set facts
   set_fact:
-    ai_svc_versions: "{{ (test_status.json).keys()|list }}"
-    ai_svc_version: "{{ (test_status.json)[cluster_version|string] }}"
-    cluster_image: "{{ (test_status.json)[cluster_version|string].release_image }}"
-    cluster_full_version: "{{ (test_status.json)[cluster_version|string].release_version }}"
+    ai_svc_versions: "{{ (ocp_versions.json).keys()|list }}"
+    ai_svc_version: "{{ (ocp_versions.json)[cluster_version|string] }}"
+    cluster_image: "{{ (ocp_versions.json)[cluster_version|string].release_image }}"
+    cluster_full_version: "{{ (ocp_versions.json)[cluster_version|string].release_version }}"
 
 - name: Assert that the desired version is supported by the AI Service
   assert:
