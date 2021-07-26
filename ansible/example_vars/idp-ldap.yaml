@@ -1,0 +1,4 @@
+---
+# This really only applies in my environment so I can pass an LDAP bind password to my automation
+ldapBindPassword: notMyRealPassword
+ldapCACertPath: /home/somewhere/cert.pem

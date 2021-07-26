@@ -44,12 +44,25 @@
     environment:
       NFS_PATH: "/nfs/ocp/{{ cluster_name }}"
 
+  - name: Run LDAP IDP
+    block:
+    - name: Copy over CA Cert from defined path to the Git cloned repo
+      copy:
+        src: "{{ ldapCACertPath }}"
+        dest: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/idp-ldap/cert.pem"
+
+    - name: Run IdP LDAP Provisioner
+      shell:
+        cmd: "./run.sh {{ ldapBindPassword }}"
+        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/idp-ldap/"
+    when: (ldapBindPassword is defined) and (ldapCACertPath is defined)
+
   always:
   - name: Log out of the cluster
     shell:
       cmd: oc logout
 
-- name: Delete cloned repo
-  file:
-    state: absent
-    path: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/"
+  - name: Delete cloned repo
+    file:
+      state: absent
+      path: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/"

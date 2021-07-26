@@ -1,6 +1,7 @@
 ---
 - name: Connect new cluster to Hub ACM
-  include_role: ocp-add-cluster-to-acm
+  include_role:
+    name: ocp-add-cluster-to-acm
   when: add_new_cluster_to_acm_hub|bool
   vars:
     target_cluster_name: "{{ cluster_name }}"
