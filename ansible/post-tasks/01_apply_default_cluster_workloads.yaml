@@ -44,6 +44,12 @@
     environment:
       NFS_PATH: "/nfs/ocp/{{ cluster_name }}"
 
+  - name: Deploy ACM
+    shell:
+      cmd: "./run.sh"
+      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
+    when: cluster_name == "core-ocp"
+
   - name: Run LDAP IDP
     block:
     - name: Copy over CA Cert from defined path to the Git cloned repo
