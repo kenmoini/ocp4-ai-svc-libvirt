@@ -12,17 +12,15 @@ pull_secret: "{{ lookup('file', '~/pull-secret.txt') | to_json }}"
 ################################################## Cluster Basics
 # cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
 cluster_type: Standard
-cluster_version: 4.7
+cluster_version: 4.8
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,apps,*.apps}.cluster_name.cluster_domain exist
 cluster_name: play-ocp
 cluster_domain: kemo.labs
 
-#cluster_image: quay.io/openshift-release-dev/ocp-release:4.7.9-x86_64
-
 ################################################## Cluster Networking
-# cluster_network_type = Default, Cillium, or Calico
+# cluster_network_type = Default, Cilium, or Calico (TODO, only Default works atm)
 cluster_network_type: Default
 # cluster_api_vip: an IP or "auto"
 cluster_api_vip: 192.168.42.74
@@ -51,10 +49,10 @@ cluster_nodes:
       memory: 16384
     interfaces:
       - name: eth0
-        mac_address: 54:52:00:42:69:01
+        mac_address: 54:52:00:42:69:11
         dhcp: false
         ipv4:
-          - address: 192.168.42.80
+          - address: 192.168.42.90
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
@@ -71,10 +69,10 @@ cluster_nodes:
       memory: 16384
     interfaces:
       - name: eth0
-        mac_address: 54:52:00:42:69:02
+        mac_address: 54:52:00:42:69:12
         dhcp: false
         ipv4:
-          - address: 192.168.42.81
+          - address: 192.168.42.91
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
@@ -91,10 +89,10 @@ cluster_nodes:
       memory: 16384
     interfaces:
       - name: eth0
-        mac_address: 54:52:00:42:69:03
+        mac_address: 54:52:00:42:69:13
         dhcp: false
         ipv4:
-          - address: 192.168.42.82
+          - address: 192.168.42.92
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
@@ -111,10 +109,10 @@ cluster_nodes:
       memory: 32768
     interfaces:
       - name: eth0
-        mac_address: 54:52:00:42:69:04
+        mac_address: 54:52:00:42:69:14
         dhcp: false
         ipv4:
-          - address: 192.168.42.83
+          - address: 192.168.42.93
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
@@ -131,10 +129,10 @@ cluster_nodes:
       memory: 32768
     interfaces:
       - name: eth0
-        mac_address: 54:52:00:42:69:05
+        mac_address: 54:52:00:42:69:15
         dhcp: false
         ipv4:
-          - address: 192.168.42.84
+          - address: 192.168.42.94
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
@@ -151,10 +149,10 @@ cluster_nodes:
       memory: 32768
     interfaces:
       - name: eth0
-        mac_address: 54:52:00:42:69:06
+        mac_address: 54:52:00:42:69:16
         dhcp: false
         ipv4:
-          - address: 192.168.42.85
+          - address: 192.168.42.95
             prefix: 24
         routes:
           - destination: 0.0.0.0/0
@@ -168,3 +166,9 @@ cluster_network_host_prefix: 23
 cluster_service_cidr: 172.30.0.0/16
 
 generated_asset_directory: ./.generated
+
+# Cilium Networking default configuration
+cilium_networking_git_branch: master
+cilium_networking_version: v1.9.8
+cilium_networking_tar_url: "https://codeload.github.com/cilium/cilium-olm/tar.gz/{{ cilium_networking_git_branch }}"
+

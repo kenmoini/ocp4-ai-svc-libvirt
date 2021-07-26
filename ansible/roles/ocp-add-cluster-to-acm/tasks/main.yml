@@ -1,0 +1,74 @@
+---
+# tasks file for ocp-add-cluster-to-acm
+- name: Create temporary directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: "{{ target_cluster_name }}"
+  register: tempYAMLDir
+
+- name: Run old fasioned oc CLI commands - Create ManagedCluster definition
+  block:
+  - name: Log into the hub cluster
+    shell:
+      cmd: "oc login {{ hub_cluster_api_url }} --password=\"{{ hub_cluster_password }}\" --username=\"{{ hub_cluster_username }}\" --insecure-skip-tls-verify={{ hub_cluster_skip_verify_tls }}"
+    no_log: true
+    register: hub_cluster_auth_status
+    until: (hub_cluster_auth_status.rc == 0)
+    retries: 120
+    delay: 20
+
+  - name: Template YAML files
+    template:
+      src: "{{ item.src }}"
+      dest: "{{ tempYAMLDir }}/{{ item.dest }}"
+    loop:
+      - src: templates/01-project.yaml.j2
+        dest: 01-project.yaml
+      - src: templates/02-managed-cluster.yaml.j2
+        dest: 02-managed-cluster.yaml
+      - src: templates/03-klusterlet-addon.yaml.j2
+        dest: 03-klusterlet-addon.yaml
+
+  - name: Apply YAML to hub cluster
+    shell:
+      cmd: "oc apply -f {{ tempYAMLDir }}/{{ item }}"
+    loop:
+      - 01-project.yaml
+      - 02-managed-cluster.yaml
+      - 03-klusterlet-addon.yaml
+
+  #- name: Get klusterlet-crd.yaml
+
+  #- name: Get import.yaml
+
+  always:
+  - name: Log out of the cluster
+    shell:
+      cmd: oc logout
+
+#- name: Run old fasioned oc CLI commands - Deploy Klusterlet
+#  block:
+#
+#  - name: Log into the Target Cluster
+#    shell:
+#      cmd: "oc login {{ target_cluster_api_url }} --password=\"{{ target_cluster_password }}\" --username=\"{{ target_cluster_username }}\" --insecure-skip-tls-verify={{ target_cluster_skip_verify_tls }}"
+#    no_log: true
+#    register: target_cluster_auth_status
+#    until: (target_cluster_auth_status.rc == 0)
+#    retries: 120
+#    delay: 20
+#
+#  - name: Apply klusterlet-crd.yaml
+#  
+#  - name: Apply import.yaml
+#
+#  always:
+#  - name: Log out of the cluster
+#    shell:
+#      cmd: oc logout
+
+- name: Use the registered var and the file module to remove the temporary file
+  ansible.builtin.file:
+    path: "{{ tempYAMLDir.path }}"
+    state: absent
+  when: tempYAMLDir.path is defined

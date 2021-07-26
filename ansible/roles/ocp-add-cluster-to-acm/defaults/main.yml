@@ -1,0 +1,11 @@
+---
+# defaults file for ocp-add-cluster-to-acm
+managed_cluster_hubAcceptsClient: true
+
+klusterlet_addon_applicationManager: true
+klusterlet_addon_certPolicyController: true
+klusterlet_addon_iamPolicyController: true
+klusterlet_addon_policyController: true
+klusterlet_addon_searchCollector: true
+
+klusterlet_addon_version: 2.2.0

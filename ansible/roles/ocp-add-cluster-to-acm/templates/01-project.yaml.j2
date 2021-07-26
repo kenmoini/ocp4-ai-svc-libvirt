@@ -1,0 +1,9 @@
+---
+apiVersion: config.openshift.io/v1
+kind: Project
+metadata:
+  name: {{ target_cluster_name }}
+  labels:
+    cluster.open-cluster-management.io/managedCluster: {{ target_cluster_name }}
+    kubernetes.io/metadata.name: {{ target_cluster_name }}
+spec: {}

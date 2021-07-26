@@ -1,5 +1,5 @@
 ---
-- name: Wait for 30s
+- name: Wait for 10s
   wait_for:
     timeout: 10
 
@@ -8,7 +8,6 @@
     newly_shutdown_vms: "{{ task_shutdown_vms }}"
 
 - name: Get Shutdown VMs
-  #shell: "virsh list --state-shutoff --name | grep '{{ cluster_name }}' | true"
   shell: "virsh list --state-shutoff --name"
   register: shutdown_vms_cmd
 
