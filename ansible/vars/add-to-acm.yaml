@@ -1,7 +1,0 @@
----
-add_new_cluster_to_acm_hub: true
-
-hub_cluster_api_url: https://api.core-ocp.kemo.labs:6443
-hub_cluster_username: kubeadmin
-hub_cluster_password: pws9L-IvQxb-KQAF8-vTpiR
-hub_cluster_skip_verify_tls: true
