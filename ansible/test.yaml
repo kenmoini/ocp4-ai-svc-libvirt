@@ -17,21 +17,6 @@
         extensions:
           - 'yaml'
           - 'yml'
-
-    - name: query API versions
-      uri:
-        url: "{{ assisted_service_endpoint }}/openshift_versions"
-        return_content: yes
-        method: GET
-        status_code: 200
-        body_format: json
-        headers:
-          Content-Type: application/json
-      register: test_status
-
-    - name: d
-      debug:
-        msg: "{{ (test_status.json).keys()|list }}"
       
     - name: inc
-      include_tasks: tasks/ai_svc_query_openshift_versions.yaml
+      include_tasks: post-tasks/02_connect_to_acm.yaml

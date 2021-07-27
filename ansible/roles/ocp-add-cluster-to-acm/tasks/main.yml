@@ -19,23 +19,27 @@
 
   - name: Template YAML files
     template:
-      src: "{{ item.src }}"
-      dest: "{{ tempYAMLDir }}/{{ item.dest }}"
+      src: "{{ templateFile.src }}"
+      dest: "{{ tempYAMLDir.path }}/{{ templateFile.dest }}"
     loop:
-      - src: templates/01-project.yaml.j2
+      - src: 01-project.yaml.j2
         dest: 01-project.yaml
-      - src: templates/02-managed-cluster.yaml.j2
+      - src: 02-managed-cluster.yaml.j2
         dest: 02-managed-cluster.yaml
-      - src: templates/03-klusterlet-addon.yaml.j2
+      - src: 03-klusterlet-addon.yaml.j2
         dest: 03-klusterlet-addon.yaml
+    loop_control:
+      loop_var: templateFile
 
   - name: Apply YAML to hub cluster
     shell:
-      cmd: "oc apply -f {{ tempYAMLDir }}/{{ item }}"
+      cmd: "oc apply -f {{ tempYAMLDir }}/{{ templateFile }}"
     loop:
       - 01-project.yaml
       - 02-managed-cluster.yaml
       - 03-klusterlet-addon.yaml
+    loop_control:
+      loop_var: templateFile
 
   #- name: Get klusterlet-crd.yaml
 
