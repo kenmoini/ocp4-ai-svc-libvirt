@@ -1,2 +1,4 @@
 vars/idp-ldap.yaml
-vars/*cluster-config.yaml
+vars/idp-ldap.yml
+*cluster-config.yaml*
+*cluster-config.yml*
