@@ -1,0 +1,49 @@
+---
+- name: Expand a cluster by adding nodes to an Assisted Installer managed cluster on Libvirt/KVM
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    cluster_id: ""
+    cluster_status: ""
+    deployment_name: ""
+
+  tasks:
+    - name: Read in variables
+      include_vars:
+        dir: vars
+        extensions:
+          - 'yaml'
+          - 'yml'
+
+    - name: Preflight Checks
+      include_tasks: tasks/preflight.yaml
+
+    - name: Preflight Version Checks
+      include_tasks: tasks/ai_svc_query_openshift_versions.yaml
+
+    - name: Read AI Service, check for existing cluster
+      uri:
+        url: "{{ assisted_service_endpoint }}/clusters"
+        return_content: yes
+        method: GET
+      register: read_clusters
+    
+    - name: Set facts if cluster exists
+      set_fact:
+        cluster_id: "{{ item.id }}"
+        cluster_status: "{{ item.status }}"
+      loop: "{{ read_clusters.json }}"
+      when: (item.base_dns_domain == cluster_domain) and (item.name == cluster_name)
+
+    - name: Create Additional Libvirt Infrastructure
+      block:
+      - name: Create Disks via QEMU
+        include_tasks: tasks/libvirt_create_disks.yaml
+
+      - name: Create VMs via Libvirt
+        include_tasks: tasks/libvirt_create_additional_nodes.yaml
+      become: yes
+      tags:
+        - libvirt_create_additional_nodes

@@ -95,3 +95,5 @@
     file:
       state: absent
       path: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/"
+  tags:
+  - post_tasks_1

@@ -9,3 +9,6 @@
     target_cluster_password: "{{ cluster_kubeadmin_password }}"
     target_cluster_username: "{{ cluster_kubeadmin_username }}"
     target_cluster_skip_verify_tls: true
+  tags:
+  - post_tasks_2
+  - connect_to_acm_hub

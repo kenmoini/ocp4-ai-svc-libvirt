@@ -31,45 +31,78 @@
     loop_control:
       loop_var: templateFile
 
+  - name: Create Project
+    shell: "{{ cmd_item }}"
+    loop:
+      - "oc new-project {{ target_cluster_name }}"
+      - "oc label namespace {{ target_cluster_name }} cluster.open-cluster-management.io/managedCluster={{ target_cluster_name }}"
+    loop_control:
+      loop_var: cmd_item
+    ignore_errors: true
+
   - name: Apply YAML to hub cluster
     shell:
-      cmd: "oc apply -f {{ tempYAMLDir }}/{{ templateFile }}"
+      cmd: "oc apply -f {{ tempYAMLDir.path }}/{{ templateFile }}"
     loop:
-      - 01-project.yaml
+      #- 01-project.yaml
       - 02-managed-cluster.yaml
       - 03-klusterlet-addon.yaml
     loop_control:
       loop_var: templateFile
 
-  #- name: Get klusterlet-crd.yaml
+  - name: Get klusterlet-crd.yaml
+    shell:
+      cmd: "oc get secret {{ target_cluster_name }}-import -n {{ target_cluster_name }} -o jsonpath='{.data.crds\\.yaml}' | base64 --decode > klusterlet-crd.yaml"
+      chdir: "{{ tempYAMLDir.path }}"
 
-  #- name: Get import.yaml
+  - name: Get import.yaml
+    shell:
+      cmd: "oc get secret {{ target_cluster_name }}-import -n {{ target_cluster_name }} -o jsonpath='{.data.import\\.yaml}' | base64 --decode > import.yaml"
+      chdir: "{{ tempYAMLDir.path }}"
 
   always:
   - name: Log out of the cluster
     shell:
       cmd: oc logout
+  rescue:
+  - name: Use the registered var and the file module to remove the temporary file
+    ansible.builtin.file:
+      path: "{{ tempYAMLDir.path }}"
+      state: absent
+    when: tempYAMLDir.path is defined
 
-#- name: Run old fasioned oc CLI commands - Deploy Klusterlet
-#  block:
-#
-#  - name: Log into the Target Cluster
-#    shell:
-#      cmd: "oc login {{ target_cluster_api_url }} --password=\"{{ target_cluster_password }}\" --username=\"{{ target_cluster_username }}\" --insecure-skip-tls-verify={{ target_cluster_skip_verify_tls }}"
-#    no_log: true
-#    register: target_cluster_auth_status
-#    until: (target_cluster_auth_status.rc == 0)
-#    retries: 120
-#    delay: 20
-#
-#  - name: Apply klusterlet-crd.yaml
-#  
-#  - name: Apply import.yaml
-#
-#  always:
-#  - name: Log out of the cluster
-#    shell:
-#      cmd: oc logout
+- name: Run old fasioned oc CLI commands - Deploy Klusterlet
+  block:
+
+  - name: Log into the Target Cluster
+    shell:
+      cmd: "oc login {{ target_cluster_api_url }} --password=\"{{ target_cluster_password }}\" --username=\"{{ target_cluster_username }}\" --insecure-skip-tls-verify={{ target_cluster_skip_verify_tls }}"
+    no_log: true
+    register: target_cluster_auth_status
+    until: (target_cluster_auth_status.rc == 0)
+    retries: 120
+    delay: 20
+
+  - name: Apply klusterlet-crd.yaml
+    shell:
+      cmd: oc apply -f klusterlet-crd.yaml
+      chdir: "{{ tempYAMLDir.path }}"
+  
+  - name: Apply import.yaml
+    shell:
+      cmd: oc apply -f import.yaml
+      chdir: "{{ tempYAMLDir.path }}"
+
+  always:
+  - name: Log out of the cluster
+    shell:
+      cmd: oc logout
+  rescue:
+  - name: Use the registered var and the file module to remove the temporary file
+    ansible.builtin.file:
+      path: "{{ tempYAMLDir.path }}"
+      state: absent
+    when: tempYAMLDir.path is defined
 
 - name: Use the registered var and the file module to remove the temporary file
   ansible.builtin.file:

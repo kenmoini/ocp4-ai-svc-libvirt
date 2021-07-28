@@ -113,6 +113,8 @@
       - name: Create VMs via Libvirt
         include_tasks: tasks/libvirt_create_vms.yaml
       become: yes
+      tags:
+        - create_libvirt_cluster
       
     - name: Wait for hosts to report into the Assisted Installer service
       include_tasks: tasks/ai_svc_check_for_hosts.yaml
@@ -126,6 +128,10 @@
 
     - name: Check to make sure the hosts are ready and the cluster can be installed
       include_tasks: tasks/ai_svc_check_install_ready.yaml
+
+    - name: Set Cilium Networking Cluster Manifests
+      include_tasks: tasks/networking_cilium.yaml
+      when: cluster_network_type == "Cilium"
 
     - name: Start the Cluster installation
       include_tasks: tasks/ai_svc_start_install.yaml

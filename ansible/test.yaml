@@ -19,4 +19,4 @@
           - 'yml'
       
     - name: inc
-      include_tasks: post-tasks/02_connect_to_acm.yaml
+      include_tasks: tasks/networking_cilium.yaml
