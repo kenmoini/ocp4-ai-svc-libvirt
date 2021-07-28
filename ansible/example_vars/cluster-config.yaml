@@ -166,8 +166,3 @@ cluster_network_host_prefix: 23
 cluster_service_cidr: 172.30.0.0/16
 
 generated_asset_directory: ./.generated
-
-# Cilium Networking default configuration
-cilium_networking_git_branch: master
-cilium_networking_version: v1.9.8
-cilium_networking_tar_url: "https://codeload.github.com/cilium/cilium-olm/tar.gz/{{ cilium_networking_git_branch }}"
