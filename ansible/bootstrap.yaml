@@ -133,6 +133,10 @@
       include_tasks: tasks/networking_cilium.yaml
       when: cluster_network_type == "Cilium"
 
+    - name: Set Calico Networking Cluster Manifests
+      include_tasks: tasks/networking_calico.yaml
+      when: cluster_network_type == "Calico"
+
     - name: Start the Cluster installation
       include_tasks: tasks/ai_svc_start_install.yaml
 
