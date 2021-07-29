@@ -8,7 +8,7 @@
 
 - name: Run old fasioned oc CLI commands - Create ManagedCluster definition
   block:
-  - name: Log into the hub cluster
+  - name: Log into the Hub cluster
     shell:
       cmd: "oc login {{ hub_cluster_api_url }} --password=\"{{ hub_cluster_password }}\" --username=\"{{ hub_cluster_username }}\" --insecure-skip-tls-verify={{ hub_cluster_skip_verify_tls }}"
     no_log: true
@@ -40,7 +40,7 @@
       loop_var: cmd_item
     ignore_errors: true
 
-  - name: Apply YAML to hub cluster
+  - name: Apply YAML to Hub cluster
     shell:
       cmd: "oc apply -f {{ tempYAMLDir.path }}/{{ templateFile }}"
     loop:
@@ -49,6 +49,10 @@
       - 03-klusterlet-addon.yaml
     loop_control:
       loop_var: templateFile
+
+  - name: Wait 30s for the Klusterlet to generate
+    pause:
+      seconds: 30
 
   - name: Get klusterlet-crd.yaml
     shell:
@@ -61,7 +65,7 @@
       chdir: "{{ tempYAMLDir.path }}"
 
   always:
-  - name: Log out of the cluster
+  - name: Log out of the Hub cluster
     shell:
       cmd: oc logout
   rescue:
@@ -87,14 +91,22 @@
     shell:
       cmd: oc apply -f klusterlet-crd.yaml
       chdir: "{{ tempYAMLDir.path }}"
+    register: result
+    retries: 3
+    delay: 10
+    until: result is not failed
   
   - name: Apply import.yaml
     shell:
       cmd: oc apply -f import.yaml
       chdir: "{{ tempYAMLDir.path }}"
+    register: result
+    retries: 3
+    delay: 10
+    until: result is not failed
 
   always:
-  - name: Log out of the cluster
+  - name: Log out of the Hub cluster
     shell:
       cmd: oc logout
   rescue:
