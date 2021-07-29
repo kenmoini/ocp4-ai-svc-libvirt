@@ -1,0 +1,68 @@
+---
+- name: Create temporary directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: "{{ cluster_name }}"
+  register: tempYAMLDir
+  when: cluster_network_type != 'Default'
+
+
+- name: Enable eBPF for Calico Networking
+  block:
+  when: cluster_network_type == 'Calico'
+
+  - name: Log into the cluster
+    shell:
+      cmd: "oc login {{ cluster_api_url }} --password=\"{{ cluster_kubeadmin_password }}\" --username=\"{{ cluster_kubeadmin_username }}\" --insecure-skip-tls-verify={{ cluster_skip_verify_tls }}"
+    no_log: true
+    register: cluster_auth_status
+    until: (cluster_auth_status.rc == 0)
+    retries: 120
+    delay: 20
+
+  - name: Template Tigera Operator Endpoint ConfigMap
+    template:
+      src: templates/02-configmap-endpoint-tigera-operator.yaml.j2
+      dest: "{{ tempYAMLDir.path }}/02-configmap-endpoint-tigera-operator.yaml"
+
+  - name: Apply the Tigera Operator Endpoint ConfigMap
+    shell:
+      cmd: oc apply -f 02-configmap-endpoint-tigera-operator.yaml
+      chdir: "{{ tempYAMLDir.path }}"
+  
+  - name: Wait for 65s because of some dumb k8s thing, issue #30189
+    pause:
+      seconds: 65
+
+  - name: oc CLI Magic
+    shell:
+      cmd: "{{ cmd_item }}"
+    loop:
+      - oc delete pod -n tigera-operator -l k8s-app=tigera-operator
+      - oc wait deployment.apps/calico-kube-controllers --for condition=available -n calico-system
+      - oc wait deployment.apps/calico-typha --for condition=available -n calico-system
+      - oc rollout status daemonset.apps/calico-node -n calico-system
+      - sleep 5
+      - oc patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF", "hostPorts":null}}}'
+      - sleep 5
+      - oc patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"deployKubeProxy": false}}'
+    loop_control:
+      loop_var: cmd_item
+
+  always:
+  - name: Log out of the cluster
+    shell:
+      cmd: oc logout
+
+  rescue:
+  - name: Use the registered var and the file module to remove the temporary file
+    ansible.builtin.file:
+      path: "{{ tempYAMLDir.path }}"
+      state: absent
+    when: tempYAMLDir.path is defined
+
+- name: Use the registered var and the file module to remove the temporary file
+  ansible.builtin.file:
+    path: "{{ tempYAMLDir.path }}"
+    state: absent
+  when: tempYAMLDir.path is defined

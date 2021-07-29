@@ -32,3 +32,6 @@ calico_network_manifests:
 - https://docs.projectcalico.org/manifests/ocp/tigera-operator/02-configmap-calico-resources.yaml
 - https://docs.projectcalico.org/manifests/ocp/tigera-operator/02-tigera-operator.yaml
 - https://docs.projectcalico.org/manifests/ocp/01-cr-installation.yaml
+
+calico_enable_direct_server_return: false
+calicoctl_url: https://github.com/projectcalico/calicoctl/releases/download/v3.19.1/calicoctl

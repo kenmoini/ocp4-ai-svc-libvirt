@@ -20,7 +20,7 @@ cluster_name: play-ocp
 cluster_domain: kemo.labs
 
 ################################################## Cluster Networking
-# cluster_network_type = Default, Cilium, or Calico (TODO, only Default works atm)
+# cluster_network_type = Default, Cilium, or Calico (TODO, only Default and Calico work atm)
 cluster_network_type: Default
 # cluster_api_vip: an IP or "auto"
 cluster_api_vip: 192.168.42.74
@@ -164,5 +164,7 @@ cluster_nodes:
 cluster_network_cidr: 10.128.0.0/14
 cluster_network_host_prefix: 23
 cluster_service_cidr: 172.30.0.0/16
+
+cluster_skip_verify_tls: true
 
 generated_asset_directory: ./.generated
