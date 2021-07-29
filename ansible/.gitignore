@@ -4,3 +4,5 @@ vars/add-to-acm.yaml
 vars/add-to-acm.yml
 *cluster-config.yaml*
 *cluster-config.yml*
+.generated/
+*.iso
