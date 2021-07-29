@@ -9,7 +9,6 @@
 
 - name: Enable eBPF for Calico Networking
   block:
-  when: cluster_network_type == 'Calico'
 
   - name: Log into the cluster
     shell:
@@ -60,6 +59,7 @@
       path: "{{ tempYAMLDir.path }}"
       state: absent
     when: tempYAMLDir.path is defined
+  when: cluster_network_type == 'Calico'
 
 - name: Use the registered var and the file module to remove the temporary file
   ansible.builtin.file:
