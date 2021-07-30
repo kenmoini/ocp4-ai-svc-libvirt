@@ -23,9 +23,9 @@ BASE_OS_IMAGE=https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4
 # For 4.8.0-fc.3 SNO deployments, replace BASE_OS_IMAGE with the following URL:
 # BASE_OS_IMAGE=https://mirror.openshift.com/pub/openshift-v4/amd64/dependencies/rhcos/pre-release/latest-4.8/rhcos-4.8.0-fc.4-x86_64-live.x86_64.iso
 
-OAS_UI_IMAGE=quay.io/ocpmetal/ocp-metal-ui:latest
+OAS_UI_IMAGE=quay.io/ocpmetal/ocp-metal-ui:stable
 OAS_DB_IMAGE=quay.io/ocpmetal/postgresql-12-centos7
-OAS_IMAGE=quay.io/ocpmetal/assisted-service:latest
+OAS_IMAGE=quay.io/ocpmetal/assisted-service:stable
 COREOS_INSTALLER=quay.io/coreos/coreos-installer:v0.9.1
 
 OAS_HOSTDIR=/opt/service-containers/caas-assisted-installer
@@ -37,6 +37,15 @@ OAS_COREOS_INSTALLER=${OAS_HOSTDIR}/local-store/coreos-installer
 SERVICE_FQDN="assisted-installer.kemo.labs"
 
 ########################################################################
+
+mkdir -p ${OAS_HOSTDIR}
+
+if [[ ! -f $OAS_ENV_FILE ]]; then
+  wget -O $OAS_ENV_FILE https://raw.githubusercontent.com/kenmoini/homelab/main/containers-as-a-service/caas-assisted-installer/volumes/opt/onprem-environment
+fi
+if [[ ! -f $OAS_UI_CONF ]]; then
+  wget -O $OAS_UI_CONF https://raw.githubusercontent.com/kenmoini/homelab/main/containers-as-a-service/caas-assisted-installer/volumes/opt/nginx-ui.conf
+fi
 
 # Download RHCOS live CD
 if [[ ! -f $OAS_LIVE_CD ]]; then
