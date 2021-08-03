@@ -61,7 +61,7 @@
 
     - name: Check for ACM InstallPlan
       shell:
-        cmd: oc get installplan $(oc get sub advanced-cluster-management -o jsonpath='{.status.installplan.name}') -o jsonpath='{.status.conditions[0].status}'
+        cmd: oc get installplan $(oc get sub advanced-cluster-management -o jsonpath='{.status.installplan.name}' -n open-cluster-management) -o jsonpath='{.status.conditions[0].status}' -n open-cluster-management
       register: acm_installplan_check
       until: (acm_installplan_check.stdout == "True")
       retries: 120
