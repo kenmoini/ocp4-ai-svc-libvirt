@@ -15,6 +15,7 @@
         remote_src: yes
         src: "{{ generated_asset_directory }}/cluster_key-{{ deployment_name }}"
         dest: "{{ generated_asset_directory }}/{{ cluster_id }}/cluster_key"
+        mode: 0400
 
     - name: Copy public key
       copy:
