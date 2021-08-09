@@ -1,0 +1,106 @@
+---
+- name: Removes a cluster from the AI Service and Libvirt/KVM
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    cluster_id: ""
+    cluster_status: ""
+    deployment_name: ""
+    delete_generated_assets: false
+
+  tasks:
+    - name: Read in variables
+      include_vars:
+        dir: vars
+        extensions:
+          - 'yaml'
+          - 'yml'
+
+    - name: Preflight Checks
+      include_tasks: tasks/preflight.yaml
+
+    - name: Read AI Service, check for existing cluster
+      uri:
+        url: "{{ assisted_service_endpoint }}/clusters"
+        return_content: yes
+        method: GET
+      register: read_clusters
+    
+    - name: Set facts if cluster exists
+      set_fact:
+        cluster_id: "{{ item.id }}"
+        cluster_status: "{{ item.status }}"
+      loop: "{{ read_clusters.json }}"
+      when: (item.base_dns_domain == cluster_domain) and (item.name == cluster_name)
+
+    - name: Delete the cluster from the Assisted Installer service
+      block:
+      - name: Cancel the cluster just in case
+        uri:
+          url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/actions/cancel"
+          return_content: yes
+          method: POST
+          status_code: 202
+          body_format: json
+          headers:
+            Content-Type: application/json
+        register: cancel_cluster
+        ignore_errors: yes
+
+      - name: Reset the cluster just in case
+        uri:
+          url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/actions/reset"
+          return_content: yes
+          method: POST
+          status_code: 202
+          body_format: json
+          headers:
+            Content-Type: application/json
+        register: reset_cluster
+        ignore_errors: yes
+
+      - name: Delete the cluster
+        uri:
+          url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}"
+          return_content: yes
+          method: DELETE
+          status_code: 204
+          body_format: json
+          headers:
+            Content-Type: application/json
+        register: delete_cluster
+        ignore_errors: yes
+      when: cluster_id != ""
+
+    - name: Delete the VMs in Libvirt
+      block:
+      - name: Destroy all the VMs
+        community.libvirt.virt:
+          name: "{{ cluster_name }}-{{ item.name }}"
+          command: undefine
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          label: "Deleting {{ cluster_name }}-{{ item.name }}"
+        ignore_errors: yes
+
+      - name: Delete the VM disks
+        file:
+          state: absent
+          path: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          label: "Deleting {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+
+      - name: Delete the AI ISO
+        file:
+          state: absent
+          path: "{{ libvirt_base_iso_path }}/ocp_ai-{{ cluster_id }}.iso"
+        when: cluster_id != ""
+
+      - name: Delete the generated content directory
+        file:
+          state: absent
+          path: "{{ generated_asset_directory }}/{{ cluster_id }}/"
+        when: delete_generated_assets|bool and cluster_id != ""
