@@ -28,14 +28,13 @@
 
   - name: Post the manifests to the cluster
     uri:
+      headers: "{{ compiled_uri_headers }}"
       url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/manifests"
       return_content: yes
       method: POST
       body: "{\"file_name\":\"{{ manifest.key }}\", \"folder\":\"manifests\", \"content\":\"{{ manifest.value }}\"}"
       status_code: 201
       body_format: json
-      headers:
-        Content-Type: application/json
     loop: "{{ cilium_manifests | dict2items }}"
     loop_control:
       loop_var: manifest

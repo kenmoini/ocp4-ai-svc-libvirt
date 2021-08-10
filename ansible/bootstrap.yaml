@@ -8,6 +8,8 @@
     cluster_id: ""
     cluster_status: ""
     deployment_name: ""
+    compiled_uri_headers:
+      User-Agent: AnsibleAutomation/4.2
 
   tasks:
     - name: Read in variables
@@ -20,11 +22,16 @@
     - name: Preflight Checks
       include_tasks: tasks/preflight.yaml
 
+    - name: Set up Authentication Headers if needed
+      include_tasks: tasks/ai_svc_setup_auth_headers.yaml
+      when: assisted_service_authentication != "none"
+
     - name: Preflight Version Checks
       include_tasks: tasks/ai_svc_query_openshift_versions.yaml
 
     - name: Read AI Service, check for existing cluster
       uri:
+        headers: "{{ compiled_uri_headers }}"
         url: "{{ assisted_service_endpoint }}/clusters"
         return_content: yes
         method: GET

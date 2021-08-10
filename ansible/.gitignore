@@ -1,7 +1,9 @@
 vars/idp-ldap.yaml
 vars/idp-ldap.yml
 vars/add-to-acm.yaml
-vars/add-to-acm.yml
+vars/add-to-acm.yaml
+vars/assisted-service.yml
+vars/assisted-service.yaml
 *cluster-config.yaml*
 *cluster-config.yml*
 .generated/

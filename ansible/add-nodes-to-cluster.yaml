@@ -25,6 +25,7 @@
 
     - name: Read AI Service, check for existing cluster
       uri:
+        headers: "{{ compiled_uri_headers }}"
         url: "{{ assisted_service_endpoint }}/clusters"
         return_content: yes
         method: GET

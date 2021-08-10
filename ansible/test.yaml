@@ -1,6 +1,6 @@
 ---
 
-- name: Create an Assisted Installer provisioned OpenShift Cluster on Libvirt/KVM
+- name: Test playbook
   hosts: localhost
   connection: local
   gather_facts: false
@@ -9,6 +9,8 @@
     cluster_id: ""
     cluster_status: ""
     deployment_name: ""
+    compiled_uri_headers:
+      User-Agent: AnsibleAutomation/4.2
 
   tasks:
     - name: Read in variables
@@ -19,4 +21,4 @@
           - 'yml'
       
     - name: inc
-      include_tasks: tasks/networking_cilium.yaml
+      include_tasks: tasks/ai_svc_setup_auth_headers.yaml

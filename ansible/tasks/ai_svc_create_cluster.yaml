@@ -7,14 +7,13 @@
 
 - name: AI Service - Create Cluster
   uri:
+    headers: "{{ compiled_uri_headers }}"
     url: "{{ assisted_service_endpoint }}/clusters/"
     return_content: yes
     method: POST
     body: "{{ lookup('file',generated_asset_directory+'/deployment-'+deployment_name+'.json') }}"
     status_code: 201
     body_format: json
-    headers:
-      Content-Type: application/json
   register: create_cluster
 
 - name: Set facts for Cluster

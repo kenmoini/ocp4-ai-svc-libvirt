@@ -1,0 +1,24 @@
+---
+- name: Set up Basic Username/Password authentication
+  block:
+  - name: Set up temporary fact
+    set_fact:
+      tmp_auth_header_fact:
+        Authorization: "Basic {{ (assisted_service_authentication_basic_username + ':' + assisted_service_authentication_basic_password)|b64encode }}"
+
+  - name: Set up headers for Username/Password authentication
+    set_fact:
+      compiled_uri_headers: "{{ compiled_uri_headers | combine(tmp_auth_header_fact) }}"
+  when: assisted_service_authentication == "user-pass"
+
+- name: Set up Bearer Token authentication
+  block:
+  - name: Set up temporary fact
+    set_fact:
+      tmp_auth_header_fact:
+        Authorization: "Bearer {{ assisted_service_authentication_api_bearer_token }}"
+
+  - name: Set up headers for Bearer authentication
+    set_fact:
+      compiled_uri_headers: "{{ compiled_uri_headers | combine(tmp_auth_header_fact) }}"
+  when: assisted_service_authentication == "bearer-token"

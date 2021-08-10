@@ -1,10 +1,11 @@
 ---
-
+#####################################################################
 # Cilium Networking default configuration
 cilium_networking_git_branch: master
 cilium_networking_version: v1.9.8
 cilium_networking_tar_url: "https://codeload.github.com/cilium/cilium-olm/tar.gz/{{ cilium_networking_git_branch }}"
 
+#####################################################################
 # Calico Networking Default configuration
 calico_network_manifests:
 - https://docs.projectcalico.org/manifests/ocp/crds/01-crd-installation.yaml

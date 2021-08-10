@@ -6,12 +6,11 @@
 
 - name: AI Svc - Post ISO Parameters
   uri:
+    headers: "{{ compiled_uri_headers }}"
     url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/downloads/image"
     return_content: yes
     method: POST
     body: "{{ lookup('file', generated_asset_directory +'/'+ cluster_id +'/iso_params.json') }}"
     status_code: 201
     body_format: json
-    headers:
-      Content-Type: application/json
   register: set_cluster_iso_params

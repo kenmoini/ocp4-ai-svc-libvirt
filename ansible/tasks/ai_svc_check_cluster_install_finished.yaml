@@ -1,13 +1,12 @@
 ---
 - name: Ensure the cluster is fully installed
   uri:
+    headers: "{{ compiled_uri_headers }}"
     url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}"
     return_content: yes
     method: GET
     status_code: 200
     body_format: json
-    headers:
-      Content-Type: application/json
   register: cluster_install_status
   until: (cluster_install_status.json.status == "installed")
   retries: 120
