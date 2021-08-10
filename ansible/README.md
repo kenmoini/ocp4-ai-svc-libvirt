@@ -8,7 +8,7 @@ What this Ansible content will do is the following:
 
 ### bootstrap.yaml
 
-1. Do preflight for binaries, create asset generation directory
+1. Do preflight for binaries, create asset generation directory, set HTTP Headers & Authentication
 2. Do preflight checks for supported OpenShift versions on the Assisted Installer Service
 3. Query the AI Svc, check for existing cluster with the same name
 4. Set needed facts, or create a new cluster with new SSH keys
