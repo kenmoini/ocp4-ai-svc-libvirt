@@ -39,6 +39,27 @@ ansible-galaxy collection install -r requirements.yml
 - Copy `example_vars/cluster-config.yaml` to the working directory, ideally with a prefix of the cluster name - modify as needed
 - Modify the other files in `example_vars/` and copy to `vars/` as you see fit, in case you need to add the new cluster to an ACM Hub for instance
 
+## Using the Red Hat Console/Cloud hosted Installer Service
+
+Instead of hosting the Assisted Installer Service yourself, you can use the AI Service hosted online by Red Hat: https://console.redhat.com/openshift/assisted-installer/clusters
+
+To do so with this automation:
+
+1. Get an Offline Token: https://access.redhat.com/management/api
+2. Modify the `vars/assisted-service.yaml` variable file and define the following:
+
+```yaml
+assisted_service_fqdn: api.openshift.com
+assisted_service_port: 443
+assisted_service_transport: https
+assisted_service_authentication: bearer-token
+assisted_service_authentication_api_bearer_token: yourOfflineToken
+```
+
+*The `bootstrap.yaml` Playbook will swap out the Offline Token for an ephemerial API token.*
+
+3. Make sure the hardware definition of your VMs meets the minimum required by the hosted service
+
 ## Running the Playbook
 
 With the needed variables altered, you can run the Playbook with the following command:

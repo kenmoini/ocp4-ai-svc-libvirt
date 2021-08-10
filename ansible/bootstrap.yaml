@@ -103,6 +103,7 @@
 
         - name: Pull OpenShift ISO if needed
           get_url:
+            headers: "{{ compiled_uri_headers }}"
             url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/downloads/image"
             dest: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
           when: not iso_check.stat.exists
