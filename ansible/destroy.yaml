@@ -3,6 +3,7 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  become: yes
 
   vars:
     cluster_id: ""
@@ -105,6 +106,13 @@
         loop: "{{ cluster_nodes }}"
         loop_control:
           label: "Deleting {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+
+      - name: Reattach devices to host system from VMs
+        include_tasks: tasks/libvirt_reattach_devices.yaml
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          loop_var: node
+        when: node.pci_devices is defined
 
       - name: Delete the AI ISO
         file:

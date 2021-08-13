@@ -1,0 +1,15 @@
+---
+- name: Create list of devices to pass to nodedev-detach
+  set_fact:
+    device_list: "{{ device_list|default([]) + ['pci_0000_' + dev.split(':')[0] + '_' + dev.split(':')[1].split('.')[0] + '_' + dev.split(':')[1].split('.')[1] ] }}"
+  when: node.pci_devices is defined
+  loop: "{{ node.pci_devices }}"
+  loop_control:
+    loop_var: dev
+
+- name: Detach any PCI devices that will be mounted to the node VMs
+  shell:
+    cmd: "virsh nodedev-detach {{ dev_target }}"
+  loop: "{{ device_list }}"
+  loop_control:
+    loop_var: dev_target

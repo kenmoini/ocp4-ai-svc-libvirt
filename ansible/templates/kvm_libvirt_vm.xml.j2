@@ -119,14 +119,14 @@
       <alias name='virtio-serial0'/>
       <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
     </controller>
-    {% for iface in item.interfaces %}
+{% for iface in item.interfaces %}
     <interface type='bridge'>
       <mac address='{{ iface.mac_address }}'/>
       <source {{ libvirt_network.type }}='{{ libvirt_network.name }}'/>
       <model type='{{ libvirt_network.model }}'/>
       <alias name='{{ iface.name }}'/>
     </interface>
-    {% endfor %}
+{% endfor %}
     <serial type='pty'>
       <target type='isa-serial' port='0'>
         <model name='isa-serial'/>
@@ -153,6 +153,15 @@
       <alias name='video0'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
     </video>
+{% if item.pci_devices is defined %}{% for dev in item.pci_devices %}
+{% set expandSemi = dev.split(":") %}{% set busID = expandSemi[0] %}{% set slotID = expandSemi[1].split(".")[0] %}{% set functionID = expandSemi[1].split(".")[1] %}
+    <hostdev mode='subsystem' type='pci' managed='yes'>
+      <driver name='vfio'/>
+      <source>
+        <address domain='0x0000' bus='0x{{ busID }}' slot='0x{{ slotID }}' function='0x{{ functionID }}'/>
+      </source>
+    </hostdev>
+{% endfor %}{% endif %}
     <memballoon model='none'/>
     <rng model='virtio'>
       <backend model='random'>/dev/urandom</backend>

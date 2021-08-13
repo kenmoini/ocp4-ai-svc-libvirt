@@ -147,6 +147,12 @@ cluster_nodes:
       cpu_sockets: 1
       cpu_threads: 1
       memory: 32768
+    #pci_devices:
+    # A list of strings of PCI devices as reported by `sudo lspci -nn`
+    #  - "81:00.0"
+    #  - "81:00.1"
+    #  - "81:00.2"
+    #  - "81:00.3"
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:16

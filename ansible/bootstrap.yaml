@@ -118,6 +118,13 @@
       - name: Create Disks via QEMU
         include_tasks: tasks/libvirt_create_disks.yaml
 
+      - name: Detach devices from host system for VMs
+        include_tasks: tasks/libvirt_detach_devices.yaml
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          loop_var: node
+        when: node.pci_devices is defined
+
       - name: Create VMs via Libvirt
         include_tasks: tasks/libvirt_create_vms.yaml
       become: yes
