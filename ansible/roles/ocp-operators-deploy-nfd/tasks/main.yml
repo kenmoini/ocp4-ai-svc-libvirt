@@ -1,0 +1,39 @@
+---
+# tasks file for ocp-operators-deploy-nfd
+
+- name: Template OpenShift Objects for Node Feature Discovery
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', item ) | from_yaml }}"
+  loop:
+  - ./templates/nfd_subscription.yaml.j2
+
+# wait for NFD CRDs
+- name: Wait for NFD CRD
+  k8s_info:
+    api_version: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    name: nodefeaturediscoveries.nfd.openshift.io
+  register: nfd_crd
+  retries: 200
+  delay: 10
+  until: nfd_crd.resources | list | length == 1
+
+- name: Notify user if NFD deployment failed
+  when: not nfd_crd.resources | list | length == 1
+  debug:
+    msg: "user.info: *** Node Feature Discovery Operator could not be installed ***"
+
+- name: Template OpenShift Objects for Node Feature Discovery Instance
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', item ) | from_yaml }}"
+  loop:
+  - ./templates/nfd_instance.yaml.j2
+
