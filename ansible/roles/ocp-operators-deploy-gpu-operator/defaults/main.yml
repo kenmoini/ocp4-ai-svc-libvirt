@@ -1,0 +1,4 @@
+---
+# defaults file for ocp-operators-deploy-gpu-operator
+operator_namespace: gpu-operator-resources
+

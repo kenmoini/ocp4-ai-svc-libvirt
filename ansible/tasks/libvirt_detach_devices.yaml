@@ -1,8 +1,13 @@
 ---
+
+- name: Get Running VMs
+  shell: "virsh list --state-running --name"
+  register: running_vms_cmd
+
 - name: Create list of devices to pass to nodedev-detach
   set_fact:
     device_list: "{{ device_list|default([]) + ['pci_0000_' + dev.split(':')[0] + '_' + dev.split(':')[1].split('.')[0] + '_' + dev.split(':')[1].split('.')[1] ] }}"
-  when: node.pci_devices is defined
+  when: node.pci_devices is defined and (cluster_name + '-' + node.name) not in running_vms_cmd.stdout_lines
   loop: "{{ node.pci_devices }}"
   loop_control:
     loop_var: dev
@@ -13,3 +18,4 @@
   loop: "{{ device_list }}"
   loop_control:
     loop_var: dev_target
+  when: device_list is defined

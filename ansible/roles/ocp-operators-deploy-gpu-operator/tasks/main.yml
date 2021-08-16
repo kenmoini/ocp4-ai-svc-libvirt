@@ -1,0 +1,29 @@
+---
+# tasks file for ocp-operators-deploy-gpu-operator
+
+- name: create project for GPU Operator
+  k8s:
+    state: present
+    kind: Project
+    api_version: project.openshift.io/v1
+    definition:
+      metadata:
+        name: "{{ operator_namespace }}"
+        annotations:
+          openshift.io/description: "Resources for the GPU Operator"
+          openshift.io/display-name: "GPU Operator"
+        labels:
+          openshift.io/cluster-monitoring: "true"
+      spec: {}
+
+- name: Create GPU Operator Objects
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_file ) | from_yaml }}"
+  loop:
+  - ./templates/subscription.yaml.j2
+  loop_control:
+    loop_var: template_file

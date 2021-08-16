@@ -166,6 +166,11 @@ cluster_nodes:
             next_hop_interface: eth0
             table_id: 254
 
+# extra_roles [optional]: name roles to run after cluster provisioning
+#extra_roles:
+#- ocp-operators-deploy-nfd
+#- ocp-operators-deploy-gpu-operator
+
 ################################################## DO NOT EDIT PAST THIS LINE (unless you know what you're doing)
 cluster_network_cidr: 10.128.0.0/14
 cluster_network_host_prefix: 23

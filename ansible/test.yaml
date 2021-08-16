@@ -21,8 +21,9 @@
           - 'yml'
       
     - name: inc
-      include_tasks: tasks/libvirt_detach_devices.yaml
-      loop: "{{ cluster_nodes }}"
-      loop_control:
-        loop_var: node
-      when: node.pci_devices is defined
+      include_role:
+        name: ocp-operators-deploy-nfd
+      
+    - name: inc
+      include_role:
+        name: ocp-operators-deploy-gpu-operator
