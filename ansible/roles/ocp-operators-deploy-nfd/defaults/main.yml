@@ -2,3 +2,4 @@
 # defaults file for ocp-operators-deploy-nfd
 nfd_subscription_channel: "4.8"
 nfd_instance_image_tag: "v4.8.0"
+nfd_API_version: "v1"

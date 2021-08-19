@@ -1,0 +1,25 @@
+---
+- name: Create OpenShift Objects for Cluster Logging
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('file', item ) | from_yaml }}"
+  loop:
+  - ./files/clusterlogging_subscription.yaml
+
+- name: Wait for Cluster Logging CRD
+  k8s_info:
+    api_version: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    name: clusterloggings.logging.openshift.io
+  register: r_logging_crd
+  retries: 200
+  delay: 10
+  until: r_logging_crd.resources | list | length == 1
+
+- name: Notify user if Cluster Logging deployment failed
+  when: not r_logging_crd.resources | list | length == 1
+  debug:
+    msg: "user.info: *** Cluster Logging could not be installed ***"

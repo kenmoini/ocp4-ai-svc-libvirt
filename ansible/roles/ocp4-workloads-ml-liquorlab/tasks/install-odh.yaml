@@ -1,0 +1,27 @@
+---
+# Setup Open Data Hub via operator
+- name: Create OpenShift Objects for Open Data Hub
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('file', item ) | from_yaml }}"
+  loop:
+  - ./files/opendatahub_subscription.yaml
+
+# wait for odh CRDs
+- name: Wait for ODH CRD
+  k8s_info:
+    api_version: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    name: kfdefs.kfdef.apps.kubeflow.org
+  register: odh_crd
+  retries: 200
+  delay: 10
+  until: odh_crd.resources | list | length == 1
+
+- name: Notify user if odh deployment failed
+  when: not odh_crd.resources | list | length == 1
+  debug:
+    msg: "user.info: *** Open Data Hub could not be installed ***"

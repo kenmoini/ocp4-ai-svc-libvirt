@@ -1,0 +1,3 @@
+---
+# defaults file for ocp4-workloads-ml-liquorlab
+ml_project_namespace: liquor-ml

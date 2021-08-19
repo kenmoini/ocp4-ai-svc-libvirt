@@ -19,11 +19,7 @@
         extensions:
           - 'yaml'
           - 'yml'
-      
+
     - name: inc
       include_role:
-        name: ocp-operators-deploy-nfd
-      
-    - name: inc
-      include_role:
-        name: ocp-operators-deploy-gpu-operator
+        name: ocp4-workloads-ml-liquorlab

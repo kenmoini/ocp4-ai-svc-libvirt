@@ -25,10 +25,10 @@
     #  validate_certs: false
     #register: openshift_auth_results
 
-  - name: Run Matrix Login script
-    shell:
-      cmd: "./run.sh"
-      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/matrix-login/"
+#  - name: Run Matrix Login script
+#    shell:
+#      cmd: "./run.sh"
+#      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/matrix-login/"
 
   - name: Run NFS Registry Script
     shell:
@@ -44,34 +44,34 @@
     environment:
       NFS_PATH: "/nfs/ocp/{{ cluster_name }}"
 
-  - name: Deploy ACM
-    block:
-    - name: Create ACM Project
-      shell:
-        cmd: oc apply -f 01-project.yaml
-        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
-    - name: Create ACM OperatorGroup
-      shell:
-        cmd: oc apply -f 02-operatorgroup.yaml
-        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
-    - name: Create ACM Subscription
-      shell:
-        cmd: oc apply -f 03-subscription.yaml
-        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
-
-    - name: Check for ACM InstallPlan
-      shell:
-        cmd: oc get installplan $(oc get sub advanced-cluster-management -o jsonpath='{.status.installplan.name}' -n open-cluster-management) -o jsonpath='{.status.conditions[0].status}' -n open-cluster-management
-      register: acm_installplan_check
-      until: (acm_installplan_check.stdout == "True")
-      retries: 120
-      delay: 20
-
-    - name: Deploy MultiClusterHub
-      shell:
-        cmd: oc apply -f 04-multiclusterhub.yaml
-        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
-    when: cluster_name == "core-ocp"
+#  - name: Deploy ACM
+#    block:
+#    - name: Create ACM Project
+#      shell:
+#        cmd: oc apply -f 01-project.yaml
+#        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
+#    - name: Create ACM OperatorGroup
+#      shell:
+#        cmd: oc apply -f 02-operatorgroup.yaml
+#        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
+#    - name: Create ACM Subscription
+#      shell:
+#        cmd: oc apply -f 03-subscription.yaml
+#        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
+#
+#    - name: Check for ACM InstallPlan
+#      shell:
+#        cmd: oc get installplan $(oc get sub advanced-cluster-management -o jsonpath='{.status.installplan.name}' -n open-cluster-management) -o jsonpath='{.status.conditions[0].status}' -n open-cluster-management
+#      register: acm_installplan_check
+#      until: (acm_installplan_check.stdout == "True")
+#      retries: 120
+#      delay: 20
+#
+#    - name: Deploy MultiClusterHub
+#      shell:
+#        cmd: oc apply -f 04-multiclusterhub.yaml
+#        chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/acm-hub/"
+#    when: cluster_name == "core-ocp"
 
   - name: Run LDAP IDP
     block:

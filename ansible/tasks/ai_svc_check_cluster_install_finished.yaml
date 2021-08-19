@@ -10,4 +10,4 @@
   register: cluster_install_status
   until: (cluster_install_status.json.status == "installed")
   retries: 120
-  delay: 20
+  delay: 30

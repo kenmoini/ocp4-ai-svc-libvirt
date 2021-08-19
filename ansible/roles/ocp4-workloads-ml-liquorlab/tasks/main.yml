@@ -1,0 +1,307 @@
+---
+# tasks file for ocp4-workloads-ml-liquorlab
+- name: Create Namespace/Project for ML Workload
+  k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "{{ ml_project_namespace }}"
+        annotations:
+          openshift.io/description: "Liquor Bottle Classifier"
+          openshift.io/display-name: "ML - Liquor"
+        labels:
+          openshift.io/cluster-monitoring: "true"
+      spec: {}
+
+- name: Ensure there is a GP2 named StorageClass
+  k8s_info:
+    api_version: storage.k8s.io/v1
+    kind: StorageClass
+    name: gp2
+  register: gp2_sc
+
+- name: fail & notify the user if there is no GP2 named StorageClass
+  fail:
+    msg: "No gp2 named StorageClass for OpenShift Logging found!"
+  when: gp2_sc.resources | list | length == 0
+
+################################################################################ Serverless
+- name: Check to see if the OpenShift Serverless Operator is installed
+  k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: Subscription
+    name: serverless-operator
+    namespace: openshift-serverless
+  register: r_serverless_sub
+
+- name: Create OpenShift Objects for Serverless (knative)
+  include_tasks: install-serverless.yaml
+  when: r_serverless_sub.resources | list | length == 0
+
+################################################################################ AMQ Streams
+- name: Check to see if the OpenShift AMQ Streams Operator is installed
+  k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: Subscription
+    name: amq-streams
+    namespace: openshift-operators
+  register: r_amq_sub
+
+- name: Create OpenShift Objects for AMQ Streams
+  include_tasks: install-amqstreams.yaml
+  when: r_amq_sub.resources | list | length == 0
+
+################################################################################ Cluster Logging
+- name: Create Namespace/Project for Cluster Logging
+  k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: openshift-logging
+
+- name: Check to see if the Cluster Logging Operator is installed
+  k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: Subscription
+    name: cluster-logging
+    namespace: openshift-logging
+  register: r_logging_sub
+
+- name: Create OpenShift Objects for Cluster Logging
+  include_tasks: install-clusterlogging.yaml
+  when: r_logging_sub.resources | list | length == 0
+
+# Ensure the OpenShift ElasticSearch Operator is installed
+- name: Check to see if the Elasticsearch Operator is installed
+  k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: Subscription
+    name: elasticsearch-operator
+    namespace: openshift-operators-redhat
+  register: r_elastic_sub
+
+- name: Create OpenShift Objects for Elasticsearch
+  include_tasks: install-elasticsearch.yaml
+  when: r_elastic_sub.resources | list | length == 0
+
+################################################################################ Open Data Hub
+- name: Check to see if the OpenDataHub Operator is installed
+  k8s_info:
+    api_version: operators.coreos.com/v1alpha1
+    kind: Subscription
+    name: opendatahub-operator
+    namespace: openshift-operators
+  register: r_odf_sub
+
+- name: Create OpenShift Objects for OpenDataHub
+  include_tasks: install-odh.yaml
+  when: r_odf_sub.resources | list | length == 0
+
+- name: Create OpenDataHub KfDef Object
+  k8s:
+    state: present
+    kind: KfDef
+    api_version: kfdef.apps.kubeflow.org/v1
+    definition:
+      metadata:
+        name: opendatahub-liquor
+        namespace: "{{ ml_project_namespace }}"
+      spec:
+        applications:
+          - kustomizeConfig:
+              repoRef:
+                name: manifests
+                path: odh-common
+            name: odh-common
+          - kustomizeConfig:
+              repoRef:
+                name: manifests
+                path: ceph/object-storage/scc
+            name: ceph-nano-scc
+          - kustomizeConfig:
+              repoRef:
+                name: manifests
+                path: ceph/object-storage/nano
+            name: ceph-nano
+          - kustomizeConfig:
+              repoRef:
+                name: manifests
+                path: grafana/cluster
+            name: grafana-cluster
+          - kustomizeConfig:
+              repoRef:
+                name: manifests
+                path: grafana/grafana
+            name: grafana-instance
+          - kustomizeConfig:
+              repoRef:
+                name: manifests
+                path: prometheus/cluster
+            name: prometheus-cluster
+          - kustomizeConfig:
+              repoRef:
+                name: manifests
+                path: prometheus/operator
+            name: prometheus-operator
+          - kustomizeConfig:
+              parameters:
+                - name: s3_endpoint_url
+                  value: 'http://ceph-nano-0'
+              repoRef:
+                name: manifests
+                path: jupyterhub/jupyterhub
+            name: jupyterhub
+          - kustomizeConfig:
+              overlays:
+                - additional
+              repoRef:
+                name: manifests
+                path: jupyterhub/notebook-images
+            name: notebook-images
+        repos:
+          - name: manifests
+            uri: 'https://github.com/kenmoini/odh-manifests/tarball/v1.0.2'
+
+- name: Create database application
+  community.okd.openshift_process:
+    name: mariadb-ephemeral
+    namespace: openshift
+    parameters:
+      NAMESPACE: openshift
+      DATABASE_SERVICE_NAME: liquorlabdb
+      MYSQL_USER: liquorlab
+      MYSQL_PASSWORD: liquorlab
+      MYSQL_ROOT_PASSWORD: liquorlab
+      MYSQL_DATABASE: liquorlabdb
+    state: rendered
+  register: rendered
+
+- name: Launch Database application
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    definition: "{{ item }}"
+  loop: '{{ rendered.resources }}'
+
+- name: Wait for the database to come up
+  k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ ml_project_namespace }}"
+    label_selectors:
+      - deploymentconfig = liquorlabdb
+      - name = liquorlabdb
+    field_selectors:
+      - status.phase=Running
+  register: r_db_pod
+  retries: 200
+  delay: 10
+  until: r_db_pod.resources | list | length == 1
+
+- name: Populate the database
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    api_version: batch/v1
+    kind: Job
+    definition:
+      metadata:
+        name: dbpopulate
+      spec:
+        parallelism: 1
+        completions: 1
+        activeDeadlineSeconds: 1800
+        backoffLimit: 6
+        template:
+          metadata:
+            name: dbpopulate
+          spec:
+            containers:
+            - name: dbpopulate
+              image: mariadb
+              command:
+              - mysql
+              - "-h"
+              - liquorlabdb
+              - "-u"
+              - root
+              - "--password=liquorlab"
+              - liquorlabdb
+              - "-e"
+              - "CREATE TABLE images_uploaded(time TIMESTAMP, name VARCHAR(255));CREATE TABLE images_processed(time TIMESTAMP, name VARCHAR(255), model VARCHAR(10), label VARCHAR(20));CREATE TABLE images_anonymized(time TIMESTAMP, name VARCHAR(255));INSERT INTO images_uploaded(time,name) SELECT CURRENT_TIMESTAMP(), '';INSERT INTO images_processed(time,name,model,label) SELECT CURRENT_TIMESTAMP(), '', '','';INSERT INTO images_anonymized(time,name) SELECT CURRENT_TIMESTAMP(), '';"
+            restartPolicy: OnFailure
+
+- name: Create a Kafka Cluster
+  k8s:
+    api_version: kafka.strimzi.io/v1beta2
+    kind: Kafka
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      metadata:
+        name: my-cluster
+      spec:
+        kafka:
+          config:
+            offsets.topic.replication.factor: 3
+            transaction.state.log.replication.factor: 3
+            transaction.state.log.min.isr: 2
+            log.message.format.version: '2.7'
+            inter.broker.protocol.version: '2.7'
+          version: 2.7.0
+          storage:
+            type: ephemeral
+          replicas: 3
+          listeners:
+            - name: plain
+              port: 9092
+              type: internal
+              tls: false
+            - name: tls
+              port: 9093
+              type: internal
+              tls: true
+        entityOperator:
+          topicOperator: {}
+          userOperator: {}
+        zookeeper:
+          storage:
+            type: ephemeral
+          replicas: 3
+
+- name: Wait for the Kafka cluster to come up
+  k8s_info:
+    api_version: apps/v1
+    kind: StatefulSet
+    namespace: "{{ ml_project_namespace }}"
+    name: my-cluster-zookeeper
+  register: r_kafka_pod
+  retries: 200
+  delay: 10
+  until: r_kafka_pod.resources[0].status.readyReplicas == r_kafka_pod.resources[0].status.replicas
+
+- name: Create a Kafka Topic
+  k8s:
+    api_version: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      metadata:
+        name: liquor-images
+        labels:
+          strimzi.io/cluster: my-cluster
+      spec:
+        config:
+          retention.ms: 604800000
+          segment.bytes: 1073741824
+        partitions: 10
+        replicas: 3

@@ -1,6 +1,27 @@
 ---
 # tasks file for ocp-operators-deploy-nfd
 
+- name: Set facts for 4.8 objects based on cluster_version
+  set_fact:
+    nfd_subscription_channel: "4.8"
+    nfd_instance_image_tag: "v4.8.0"
+    nfd_API_version: "v1"
+  when: cluster_version == 4.8
+
+- name: Set facts for 4.7 objects based on cluster_version
+  set_fact:
+    nfd_subscription_channel: "4.7"
+    nfd_instance_image_tag: "v4.7.0"
+    nfd_API_version: "v1"
+  when: cluster_version == 4.7
+
+- name: Set facts for 4.6 objects based on cluster_version
+  set_fact:
+    nfd_subscription_channel: "4.6"
+    nfd_instance_image_tag: "v4.6.0"
+    nfd_API_version: "v1alpha1"
+  when: cluster_version == 4.6
+
 - name: Template OpenShift Objects for Node Feature Discovery
   k8s:
     state: present
