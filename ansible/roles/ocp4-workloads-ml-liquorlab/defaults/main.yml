@@ -1,5 +1,5 @@
 ---
 # defaults file for ocp4-workloads-ml-liquorlab
 ml_project_namespace: liquor-ml
-wait_for_service_build: false
+wait_for_service_build: true
 run_new_builds_if_already_built: false

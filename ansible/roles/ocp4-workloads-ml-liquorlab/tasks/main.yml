@@ -286,6 +286,8 @@
     definition:
       metadata:
         name: dbpopulate
+        labels:
+          app.kubernetes.io/part-of: ml-app-jobs
       spec:
         parallelism: 1
         completions: 1
@@ -373,6 +375,8 @@
     definition:
       metadata:
         name: dbpopulate-xraylabdb
+        labels:
+          app.kubernetes.io/part-of: ml-app-jobs
       spec:
         parallelism: 1
         completions: 1
@@ -498,6 +502,8 @@
     definition:
       metadata:
         name: bucket-worker
+        labels:
+          app.kubernetes.io/part-of: ml-app-jobs
       spec:
         parallelism: 1
         completions: 1
@@ -540,6 +546,8 @@
     definition:
       metadata:
         name: bucket-worker-liquor
+        labels:
+          app.kubernetes.io/part-of: ml-app-jobs
       spec:
         parallelism: 1
         completions: 1
@@ -694,6 +702,17 @@
       spec:
         lookupPolicy:
           local: false
+
+####################################################### SECRETS
+
+- name: Find namespace Build Dockercfg Secret
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: Secret
+    api_version: v1
+    field_selectors:
+      - type=kubernetes.io/dockercfg
+  register: builder_s_r
 
 ####################################################### BuildConfigs
 
@@ -918,7 +937,7 @@
               kind: ImageStreamTag
               name: 'image-generator:latest'
             pushSecret:
-              name: builder-dockercfg-f6v2z
+              name: "{{ builder_s_r.resources[0].metadata.name }}"
           strategy:
             type: Docker
             dockerStrategy:
@@ -931,6 +950,50 @@
               ref: main
             contextDir: /services/image-generator
     when: run_new_builds_if_already_built|bool or image_gen_r.resources[0].status.lastVersion|int == 0
+
+  - name: Create liquor-image-generator Build
+    k8s:
+      namespace: "{{ ml_project_namespace }}"
+      kind: Build
+      state: present
+      api_version: build.openshift.io/v1
+      definition:
+        metadata:
+          annotations:
+            openshift.io/build-config.name: liquor-image-generator
+            openshift.io/build.number: '{{ (liquor_image_gen_r.resources[0].status.lastVersion|int + 1) }}'
+            openshift.io/build.pod-name: "liquor-image-generator-{{ (liquor_image_gen_r.resources[0].status.lastVersion|int + 1) }}-build"
+          name: "liquor-image-generator-{{ (liquor_image_gen_r.resources[0].status.lastVersion|int + 1) }}"
+          ownerReferences:
+            - apiVersion: build.openshift.io/v1
+              kind: BuildConfig
+              uid: "{{ liquor_image_gen_r.resources[0].metadata.uid }}"
+              name: liquor-image-generator
+              controller: true
+          labels:
+            app: liquor-image-generator
+            buildconfig: liquor-image-generator
+            openshift.io/build-config.name: liquor-image-generator
+            openshift.io/build.start-policy: Serial
+        spec:
+          output:
+            to:
+              kind: ImageStreamTag
+              name: 'liquor-image-generator:latest'
+            pushSecret:
+              name: "{{ builder_s_r.resources[0].metadata.name }}"
+          strategy:
+            type: Docker
+            dockerStrategy:
+              dockerfilePath: Dockerfile
+          serviceAccount: builder
+          source:
+            type: Git
+            git:
+              uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+              ref: main
+            contextDir: /services/liquor-image-generator
+    when: run_new_builds_if_already_built|bool or liquor_image_gen_r.resources[0].status.lastVersion|int == 0
 
   - name: Create image-server Build
     k8s:
@@ -962,7 +1025,7 @@
               kind: ImageStreamTag
               name: 'image-server:latest'
             pushSecret:
-              name: builder-dockercfg-f6v2z
+              name: "{{ builder_s_r.resources[0].metadata.name }}"
           strategy:
             type: Docker
             dockerStrategy:
@@ -975,6 +1038,50 @@
               ref: main
             contextDir: /services/image-server
     when: run_new_builds_if_already_built|bool or image_srv_r.resources[0].status.lastVersion|int == 0
+
+  - name: Create liquor-image-server Build
+    k8s:
+      namespace: "{{ ml_project_namespace }}"
+      kind: Build
+      state: present
+      api_version: build.openshift.io/v1
+      definition:
+        metadata:
+          annotations:
+            openshift.io/build-config.name: liquor-image-server
+            openshift.io/build.number: '{{ (liquor_image_srv_r.resources[0].status.lastVersion|int + 1) }}'
+            openshift.io/build.pod-name: "liquor-image-server-{{ (liquor_image_srv_r.resources[0].status.lastVersion|int + 1) }}-build"
+          name: "liquor-image-server-{{ (liquor_image_srv_r.resources[0].status.lastVersion|int + 1) }}"
+          ownerReferences:
+            - apiVersion: build.openshift.io/v1
+              kind: BuildConfig
+              uid: "{{ liquor_image_srv_r.resources[0].metadata.uid }}"
+              name: liquor-image-server
+              controller: true
+          labels:
+            app: liquor-image-server
+            buildconfig: liquor-image-server
+            openshift.io/build-config.name: liquor-image-server
+            openshift.io/build.start-policy: Serial
+        spec:
+          output:
+            to:
+              kind: ImageStreamTag
+              name: 'liquor-image-server:latest'
+            pushSecret:
+              name: "{{ builder_s_r.resources[0].metadata.name }}"
+          strategy:
+            type: Docker
+            dockerStrategy:
+              dockerfilePath: Dockerfile
+          serviceAccount: builder
+          source:
+            type: Git
+            git:
+              uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+              ref: main
+            contextDir: /services/liquor-image-server
+    when: run_new_builds_if_already_built|bool or liquor_image_srv_r.resources[0].status.lastVersion|int == 0
 
   - name: Create risk-assessment Build
     k8s:
@@ -1006,7 +1113,7 @@
               kind: ImageStreamTag
               name: 'risk-assessment:latest'
             pushSecret:
-              name: builder-dockercfg-f6v2z
+              name: "{{ builder_s_r.resources[0].metadata.name }}"
           strategy:
             type: Docker
             dockerStrategy:
@@ -1019,6 +1126,50 @@
               ref: main
             contextDir: /services/risk-assessment
     when: run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0
+
+  - name: Create liquor-classifier Build
+    k8s:
+      namespace: "{{ ml_project_namespace }}"
+      kind: Build
+      state: present
+      api_version: build.openshift.io/v1
+      definition:
+        metadata:
+          annotations:
+            openshift.io/build-config.name: liquor-classifier
+            openshift.io/build.number: '{{ (liq_class_r.resources[0].status.lastVersion|int + 1) }}'
+            openshift.io/build.pod-name: "liquor-classifier-{{ (liq_class_r.resources[0].status.lastVersion|int + 1) }}-build"
+          name: "liquor-classifier-{{ (liq_class_r.resources[0].status.lastVersion|int + 1) }}"
+          ownerReferences:
+            - apiVersion: build.openshift.io/v1
+              kind: BuildConfig
+              uid: "{{ liq_class_r.resources[0].metadata.uid }}"
+              name: liquor-classifier
+              controller: true
+          labels:
+            app: liquor-classifier
+            buildconfig: liquor-classifier
+            openshift.io/build-config.name: liquor-classifier
+            openshift.io/build.start-policy: Serial
+        spec:
+          output:
+            to:
+              kind: ImageStreamTag
+              name: 'liquor-classifier:latest'
+            pushSecret:
+              name: "{{ builder_s_r.resources[0].metadata.name }}"
+          strategy:
+            type: Docker
+            dockerStrategy:
+              dockerfilePath: Dockerfile
+          serviceAccount: builder
+          source:
+            type: Git
+            git:
+              uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+              ref: main
+            contextDir: /services/liquor-classifier
+    when: run_new_builds_if_already_built|bool or liq_class_r.resources[0].status.lastVersion|int == 0
 
   ####################################################### BUILDS - Update lastVersion
       
@@ -1042,6 +1193,26 @@
       loop_var: template_item
     when: run_new_builds_if_already_built|bool or image_gen_r.resources[0].status.lastVersion|int == 0
       
+  - name: Set facts for liquor-image-generator update
+    set_fact:
+      targetObject: liquor-image-generator
+      targetNamespace: "{{ ml_project_namespace }}"
+      lastVersionUpdate: "{{ (liquor_image_gen_r.resources[0].status.lastVersion|int + 1)|int }}"
+    when: run_new_builds_if_already_built|bool or liquor_image_gen_r.resources[0].status.lastVersion|int == 0
+
+  - name: Update liquor-image-generator lastVersion
+    k8s:
+      state: present
+      merge_type:
+      - strategic-merge
+      - merge
+      definition: "{{ lookup('template', template_item ) | from_yaml }}"
+    loop:
+    - ./templates/buildconfig_update.yaml.j2
+    loop_control:
+      loop_var: template_item
+    when: run_new_builds_if_already_built|bool or liquor_image_gen_r.resources[0].status.lastVersion|int == 0
+      
   - name: Set facts for image-server update
     set_fact:
       targetObject: image-server
@@ -1062,6 +1233,26 @@
       loop_var: template_item
     when: run_new_builds_if_already_built|bool or image_srv_r.resources[0].status.lastVersion|int == 0
       
+  - name: Set facts for liquor-image-server update
+    set_fact:
+      targetObject: liquor-image-server
+      targetNamespace: "{{ ml_project_namespace }}"
+      lastVersionUpdate: "{{ (liquor_image_srv_r.resources[0].status.lastVersion|int + 1)|int }}"
+    when: run_new_builds_if_already_built|bool or liquor_image_srv_r.resources[0].status.lastVersion|int == 0
+
+  - name: Update liquor-image-server lastVersion
+    k8s:
+      state: present
+      merge_type:
+      - strategic-merge
+      - merge
+      definition: "{{ lookup('template', template_item ) | from_yaml }}"
+    loop:
+    - ./templates/buildconfig_update.yaml.j2
+    loop_control:
+      loop_var: template_item
+    when: run_new_builds_if_already_built|bool or liquor_image_srv_r.resources[0].status.lastVersion|int == 0
+      
   - name: Set facts for risk-assessment update
     set_fact:
       targetObject: risk-assessment
@@ -1081,6 +1272,26 @@
     loop_control:
       loop_var: template_item
     when: run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0
+      
+  - name: Set facts for liquor-classifier update
+    set_fact:
+      targetObject: liquor-classifier
+      targetNamespace: "{{ ml_project_namespace }}"
+      lastVersionUpdate: "{{ (liq_class_r.resources[0].status.lastVersion|int + 1)|int }}"
+    when: run_new_builds_if_already_built|bool or liq_class_r.resources[0].status.lastVersion|int == 0
+
+  - name: Update liquor-classifier lastVersion
+    k8s:
+      state: present
+      merge_type:
+      - strategic-merge
+      - merge
+      definition: "{{ lookup('template', template_item ) | from_yaml }}"
+    loop:
+    - ./templates/buildconfig_update.yaml.j2
+    loop_control:
+      loop_var: template_item
+    when: run_new_builds_if_already_built|bool or liq_class_r.resources[0].status.lastVersion|int == 0
 
 ####################################################### DeploymentConfigs
 
@@ -1097,6 +1308,7 @@
         name: image-generator
         labels:
           app: image-generator
+          app.kubernetes.io/part-of: xray-ml-app
           app.kubernetes.io/component: image-generator
           app.kubernetes.io/instance: image-generator
       spec:
@@ -1147,6 +1359,70 @@
             securityContext: {}
             schedulerName: default-scheduler
 
+- name: Create liquor-image-generator DeploymentConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    kind: DeploymentConfig
+    api_version: apps.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+        name: liquor-image-generator
+        labels:
+          app: liquor-image-generator
+          app.kubernetes.io/part-of: liquor-ml-app
+          app.kubernetes.io/component: liquor-image-generator
+          app.kubernetes.io/instance: liquor-image-generator
+      spec:
+        strategy:
+          type: Rolling
+          rollingParams:
+            updatePeriodSeconds: 1
+            intervalSeconds: 1
+            timeoutSeconds: 600
+            maxUnavailable: 25%
+            maxSurge: 25%
+          resources: {}
+          activeDeadlineSeconds: 21600
+        triggers:
+          - type: ImageChange
+            imageChangeParams:
+              automatic: true
+              containerNames:
+                - liquor-image-generator
+              from:
+                kind: ImageStreamTag
+                namespace: "{{ ml_project_namespace }}"
+                name: 'liquor-image-generator:latest'
+          - type: ConfigChange
+        replicas: 1
+        selector:
+          app: liquor-image-generator
+          deploymentconfig: liquor-image-generator
+        template:
+          metadata:
+            creationTimestamp: null
+            labels:
+              app: liquor-image-generator
+              deploymentconfig: liquor-image-generator
+          spec:
+            containers:
+              - name: liquor-image-generator
+                image: "image-registry.openshift-image-registry.svc:5000/{{ ml_project_namespace }}/liquor-image-generator"
+                envFrom:
+                  - secretRef:
+                      name: ceph-nano-credentials
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            securityContext: {}
+            schedulerName: default-scheduler
+
 - name: Create image-server DeploymentConfig
   k8s:
     namespace: "{{ ml_project_namespace }}"
@@ -1160,6 +1436,7 @@
         name: image-server
         labels:
           app: image-server
+          app.kubernetes.io/part-of: xray-ml-app
           app.kubernetes.io/component: image-server
           app.kubernetes.io/instance: image-server
       spec:
@@ -1210,6 +1487,70 @@
             securityContext: {}
             schedulerName: default-scheduler
 
+- name: Create liquor-image-server DeploymentConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    kind: DeploymentConfig
+    api_version: apps.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+        name: liquor-image-server
+        labels:
+          app: liquor-image-server
+          app.kubernetes.io/part-of: liquor-ml-app
+          app.kubernetes.io/component: liquor-image-server
+          app.kubernetes.io/instance: liquor-image-server
+      spec:
+        strategy:
+          type: Rolling
+          rollingParams:
+            updatePeriodSeconds: 1
+            intervalSeconds: 1
+            timeoutSeconds: 600
+            maxUnavailable: 25%
+            maxSurge: 25%
+          resources: {}
+          activeDeadlineSeconds: 21600
+        triggers:
+          - type: ImageChange
+            imageChangeParams:
+              automatic: true
+              containerNames:
+                - liquor-image-server
+              from:
+                kind: ImageStreamTag
+                namespace: "{{ ml_project_namespace }}"
+                name: 'liquor-image-server:latest'
+          - type: ConfigChange
+        replicas: 1
+        selector:
+          app: liquor-image-server
+          deploymentconfig: liquor-image-server
+        template:
+          metadata:
+            creationTimestamp: null
+            labels:
+              app: liquor-image-server
+              deploymentconfig: liquor-image-server
+          spec:
+            containers:
+              - name: liquor-image-server
+                image: "image-registry.openshift-image-registry.svc:5000/{{ ml_project_namespace }}/liquor-image-server"
+                envFrom:
+                  - secretRef:
+                      name: ceph-nano-credentials
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            securityContext: {}
+            schedulerName: default-scheduler
+
 ####################################################### SERVICES
 
 - name: Create image-server Service
@@ -1240,6 +1581,36 @@
         type: ClusterIP
         sessionAffinity: None
 
+- name: Create liquor-image-server Service
+  k8s:
+    state: present
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+        name: liquor-image-server
+        namespace: "{{ ml_project_namespace }}"
+        labels:
+          app: liquor-image-server
+          app.kubernetes.io/component: liquor-image-server
+          app.kubernetes.io/instance: liquor-image-server
+      spec:
+        ports:
+          - name: 5000-tcp
+            protocol: TCP
+            port: 5000
+            targetPort: 5000
+        selector:
+          app: liquor-image-server
+          deploymentconfig: liquor-image-server
+        type: ClusterIP
+        sessionAffinity: None
+
+####################################################### SERVICES
+
 - name: Create image-server Route
   k8s:
     state: present
@@ -1258,6 +1629,24 @@
           targetPort: "5000-tcp"
         wildcardPolicy: None
 
+- name: Create liquor-image-server Route
+  k8s:
+    state: present
+    definition:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      metadata:
+        name: liquor-image-server
+        namespace: "{{ ml_project_namespace }}"
+      spec:
+        to:
+          kind: Service
+          name: liquor-image-server
+          weight: 100
+        port:
+          targetPort: "5000-tcp"
+        wildcardPolicy: None
+
 - name: Get image-server Route
   k8s_info:
     kind: Route
@@ -1265,6 +1654,30 @@
     name: image-server
     namespace: "{{ ml_project_namespace }}"
   register: image_srv_route_r
+
+- name: Get liquor-image-server Route
+  k8s_info:
+    kind: Route
+    api_version: route.openshift.io/v1
+    name: liquor-image-server
+    namespace: "{{ ml_project_namespace }}"
+  register: liquor_image_srv_route_r
+
+- name: Get Grafana Route
+  k8s_info:
+    kind: Route
+    api_version: route.openshift.io/v1
+    name: grafana-route
+    namespace: "{{ ml_project_namespace }}"
+  register: grafana_route_r
+
+- name: Get JupyterHub Route
+  k8s_info:
+    kind: Route
+    api_version: route.openshift.io/v1
+    name: jupyterhub
+    namespace: "{{ ml_project_namespace }}"
+  register: jupyter_route_r
 
 ####################################################### SERVERLESS - risk-assessment
 
@@ -1275,10 +1688,22 @@
     api_version: build.openshift.io/v1
     name: "risk-assessment-{{ (risk_ass_r.resources[0].status.lastVersion|int + 1)|int }}"
   register: risk_ass_build_wait_r
-  until: risk_ass_build_wait_r.resources[0].status.phase == "Complete"
+  until: risk_ass_r.resources[0].status.phase == "Complete"
   retries: 120
   delay: 30
-  when: wait_for_service_build|bool
+  when: wait_for_service_build|bool and (run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0)
+
+- name: Wait for the liquor-classifier Build to finish
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: Build
+    api_version: build.openshift.io/v1
+    name: "liquor-classifier-{{ (liq_class_r.resources[0].status.lastVersion|int + 1)|int }}"
+  register: liq_class_build_wait_r
+  until: liq_class_r.resources[0].status.phase == "Complete"
+  retries: 120
+  delay: 30
+  when: wait_for_service_build|bool and (run_new_builds_if_already_built|bool or liq_class_r.resources[0].status.lastVersion|int == 0)
   
 - name: Create risk-assessment Knative Service
   k8s:
@@ -1289,6 +1714,8 @@
       kind: Service
       metadata:
         name: risk-assessment
+        labels:
+          app.kubernetes.io/part-of: xray-ml-app
       spec:
         template:
           metadata:
@@ -1323,6 +1750,51 @@
                   cpu: 400m
                   memory: 500M
 
+- name: Create liquor-classifier Knative Service
+  k8s:
+    state: present
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      metadata:
+        name: liquor-classifier
+        labels:
+          app.kubernetes.io/part-of: liquor-ml-app
+      spec:
+        template:
+          metadata:
+            annotations:
+              autoscaling.knative.dev/maxScale: '2'
+              autoscaling.knative.dev/target: '2'
+              revisionTimestamp: ''
+          spec:
+            timeoutSeconds: 30
+            containers:
+            - image: 'image-registry.openshift-image-registry.svc:5000/{{ ml_project_namespace }}/liquor-classifier:latest'
+              ports:
+                - containerPort: 5000
+              env:
+              - name: model_version
+                value: 'v1'
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_ACCESS_KEY_ID
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_SECRET_ACCESS_KEY
+              resources:
+                limits:
+                  cpu: 600m
+                  memory: 600M
+                requests:
+                  cpu: 400m
+                  memory: 500M
+
 - name: Create risk-assessment Knative Kafka Source
   k8s:
     state: present
@@ -1332,6 +1804,8 @@
       kind: KafkaSource
       metadata:
         name: xray-images
+        labels:
+          app.kubernetes.io/part-of: xray-ml-app
       spec:
         consumerGroup: risk-assessment
         bootstrapServers:
@@ -1343,6 +1817,29 @@
             apiVersion: serving.knative.dev/v1
             kind: Service
             name: risk-assessment
+
+- name: Create liquor-classifier Knative Kafka Source
+  k8s:
+    state: present
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      apiVersion: sources.knative.dev/v1beta1
+      kind: KafkaSource
+      metadata:
+        name: liquor-images
+        labels:
+          app.kubernetes.io/part-of: liquor-ml-app
+      spec:
+        consumerGroup: liquor-classifier
+        bootstrapServers:
+          - my-cluster-kafka-bootstrap:9092
+        topics:
+          - liquor-images
+        sink:
+          ref:
+            apiVersion: serving.knative.dev/v1
+            kind: Service
+            name: liquor-classifier
 
 ####################################################### GRAFANA - Datasources
 
@@ -1401,15 +1898,134 @@
   loop_control:
     loop_var: file_item
 
-#- name: Launch Grafana Dashboard - Xray Lab
-#  k8s:
-#    namespace: "{{ ml_project_namespace }}"
-#    state: present
-#    definition: "{{ item }}"
-#  loop: '{{ rendered.resources }}'
+####################################################### LABELS
 
-- name: Display needed resources
+- name: Set vars for xraylabdb labeling
+  set_fact:
+    targetNamespace: "{{ ml_project_namespace }}"
+    targetKind: DeploymentConfig
+    targetAPIVersion: apps.openshift.io/v1
+    targetObject: xraylabdb
+    targetLabels:
+      app.openshift.io/runtime: mariadb
+      app.kubernetes.io/part-of: xray-ml-app
+
+- name: Update Database Labels for xraydblab
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+  - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
+  loop_control:
+    loop_var: template_item
+
+- name: Set vars for liquorlabdb labeling
+  set_fact:
+    targetNamespace: "{{ ml_project_namespace }}"
+    targetKind: DeploymentConfig
+    targetAPIVersion: apps.openshift.io/v1
+    targetObject: liquorlabdb
+    targetLabels:
+      app.openshift.io/runtime: mariadb
+      app.kubernetes.io/part-of: liquor-ml-app
+
+- name: Update Database Labels for liquorlabdb
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+  - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
+  loop_control:
+    loop_var: template_item
+
+- name: Set vars for dc/jupyterhub-db labeling
+  set_fact:
+    targetNamespace: "{{ ml_project_namespace }}"
+    targetKind: DeploymentConfig
+    targetAPIVersion: apps.openshift.io/v1
+    targetObject: jupyterhub-db
+    targetLabels:
+      app.openshift.io/runtime: postgresql
+      app.kubernetes.io/part-of: OpenDataHub
+
+- name: Update Labels for dc/jupyterhub-db
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+  - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
+  loop_control:
+    loop_var: template_item
+
+- name: Set vars for dc/jupyterhub labeling
+  set_fact:
+    targetNamespace: "{{ ml_project_namespace }}"
+    targetKind: DeploymentConfig
+    targetAPIVersion: apps.openshift.io/v1
+    targetObject: jupyterhub
+    targetLabels:
+      app.openshift.io/runtime: python
+      app.kubernetes.io/part-of: OpenDataHub
+
+- name: Update Labels for dc/jupyterhub
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+  - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
+  loop_control:
+    loop_var: template_item
+
+- name: Get JupyterHub container info
+  k8s_info:
+    kind: Pod
+    label_selectors:
+      - app=jupyterhub
+      - component=singleuser-server
+  register: jupyterhub_pod_r
+
+- name: Set vars for pod/jupyterhub labeling
+  set_fact:
+    targetNamespace: "{{ ml_project_namespace }}"
+    targetKind: Pod
+    targetAPIVersion: v1
+    targetObject: "{{ jupyterhub_pod_r.resources[0].metadata.name }}"
+    targetLabels:
+      app.openshift.io/runtime: python
+      app.kubernetes.io/part-of: OpenDataHub
+
+- name: Update Labels for dc/jupyterhub
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+  - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
+  loop_control:
+    loop_var: template_item
+
+####################################################### COMPLETE!
+
+- name: COMPLETE - Display needed resources
   debug:
     msg:
       - Machine Learning Pipeline Demo successfully launched!
-      - "Image Server: http://{{ image_srv_route_r.resources[0].status.ingress[0].host }}"
+      - "=================================================================="
+      - "- Image Server: http://{{ image_srv_route_r.resources[0].status.ingress[0].host }}"
+      - "- Liquor Image Server: http://{{ liquor_image_srv_route_r.resources[0].status.ingress[0].host }}"
+      - "- Grafana Server: https://{{ grafana_route_r.resources[0].status.ingress[0].host }}"
+      - "- JupyterHub: https://{{ jupyter_route_r.resources[0].status.ingress[0].host }}"
