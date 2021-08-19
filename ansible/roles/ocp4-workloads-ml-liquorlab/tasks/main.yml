@@ -305,3 +305,45 @@
           segment.bytes: 1073741824
         partitions: 10
         replicas: 3
+
+- name: Create buckets and make them readable
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    api_version: batch/v1
+    kind: Job
+    definition:
+      metadata:
+        name: bucket-worker
+      spec:
+        parallelism: 1
+        completions: 1
+        activeDeadlineSeconds: 1800
+        backoffLimit: 6
+        template:
+          metadata:
+            name: bucket-worker
+          spec:
+            containers:
+            - name: bucket-worker
+              image: registry.access.redhat.com/ubi8/python-36
+              env:
+              - name: S3_ENDPOINT_URL
+                value: 'http://ceph-nano-0'
+              - name: BASE_BUCKET_NAME
+                value: images
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_ACCESS_KEY_ID
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_SECRET_ACCESS_KEY
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "pip install boto3 && wget https://raw.githubusercontent.com/kenmoini/ocp4-ai-svc-libvirt/main/ansible/roles/ocp4-workloads-ml-liquorlab/files/python-create-buckets.py && python python-create-buckets.py"
+            restartPolicy: OnFailure
