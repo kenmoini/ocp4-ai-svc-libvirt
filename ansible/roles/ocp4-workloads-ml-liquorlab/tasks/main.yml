@@ -17,6 +17,9 @@
         labels:
           openshift.io/cluster-monitoring: "true"
       spec: {}
+  tags:
+  - preflight
+  - create_ns
 
 - name: Ensure there is a GP2 named StorageClass
   k8s_info:
@@ -24,13 +27,19 @@
     kind: StorageClass
     name: gp2
   register: gp2_sc
+  tags:
+  - preflight
+  - gp2_check
 
 - name: fail & notify the user if there is no GP2 named StorageClass
   fail:
     msg: "No gp2 named StorageClass for OpenShift Logging found!"
   when: gp2_sc.resources | list | length == 0
+  tags:
+  - preflight
+  - gp2_check
 
-################################################################################ Serverless
+################################################################################ OPERATORS - Serverless
 - name: Check to see if the OpenShift Serverless Operator is installed
   k8s_info:
     api_version: operators.coreos.com/v1alpha1
@@ -38,12 +47,20 @@
     name: serverless-operator
     namespace: openshift-serverless
   register: r_serverless_sub
+  tags:
+  - preflight
+  - operator_checks
+  - serverless_operator
 
 - name: Create OpenShift Objects for Serverless (knative)
   include_tasks: install-serverless.yaml
   when: r_serverless_sub.resources | list | length == 0
+  tags:
+  - preflight
+  - operator_checks
+  - serverless_operator
 
-################################################################################ AMQ Streams
+################################################################################ OPERATORS - AMQ Streams
 - name: Check to see if the OpenShift AMQ Streams Operator is installed
   k8s_info:
     api_version: operators.coreos.com/v1alpha1
@@ -51,12 +68,20 @@
     name: amq-streams
     namespace: openshift-operators
   register: r_amq_sub
+  tags:
+  - preflight
+  - operator_checks
+  - amq_operator
 
 - name: Create OpenShift Objects for AMQ Streams
   include_tasks: install-amqstreams.yaml
   when: r_amq_sub.resources | list | length == 0
+  tags:
+  - preflight
+  - operator_checks
+  - amq_operator
 
-################################################################################ Cluster Logging
+################################################################################ OPERATORS - Cluster Logging
 - name: Create Namespace/Project for Cluster Logging
   k8s:
     state: present
@@ -68,6 +93,10 @@
     definition:
       metadata:
         name: openshift-logging
+  tags:
+  - preflight
+  - operator_checks
+  - logging_operator
 
 - name: Check to see if the Cluster Logging Operator is installed
   k8s_info:
@@ -76,12 +105,19 @@
     name: cluster-logging
     namespace: openshift-logging
   register: r_logging_sub
+  tags:
+  - preflight
+  - operator_checks
+  - logging_operator
 
 - name: Create OpenShift Objects for Cluster Logging
   include_tasks: install-clusterlogging.yaml
   when: r_logging_sub.resources | list | length == 0
+  tags:
+  - preflight
+  - operator_checks
+  - logging_operator
 
-# Ensure the OpenShift ElasticSearch Operator is installed
 - name: Check to see if the Elasticsearch Operator is installed
   k8s_info:
     api_version: operators.coreos.com/v1alpha1
@@ -89,12 +125,20 @@
     name: elasticsearch-operator
     namespace: openshift-operators-redhat
   register: r_elastic_sub
+  tags:
+  - preflight
+  - operator_checks
+  - elastic_operator
 
 - name: Create OpenShift Objects for Elasticsearch
   include_tasks: install-elasticsearch.yaml
   when: r_elastic_sub.resources | list | length == 0
+  tags:
+  - preflight
+  - operator_checks
+  - elastic_operator
 
-################################################################################ Open Data Hub
+################################################################################ OPERATORS - Open Data Hub
 - name: Check to see if the OpenDataHub Operator is installed
   k8s_info:
     api_version: operators.coreos.com/v1alpha1
@@ -102,10 +146,18 @@
     name: opendatahub-operator
     namespace: openshift-operators
   register: r_odf_sub
+  tags:
+  - preflight
+  - operator_checks
+  - odh_operator
 
 - name: Create OpenShift Objects for OpenDataHub
   include_tasks: install-odh.yaml
   when: r_odf_sub.resources | list | length == 0
+  tags:
+  - preflight
+  - operator_checks
+  - odh_operator
 
 - name: Create OpenDataHub KfDef Object
   k8s:
@@ -171,8 +223,13 @@
         repos:
           - name: manifests
             uri: 'https://github.com/kenmoini/odh-manifests/tarball/v1.0.2'
+  tags:
+  - odh_operator
+  - kfdef_deploy
 
-- name: Create database application
+####################################################### DATABASES - LiquorLab
+
+- name: Create database application - LiquorLab
   community.okd.openshift_process:
     name: mariadb-ephemeral
     namespace: openshift
@@ -185,15 +242,23 @@
       MYSQL_DATABASE: liquorlabdb
     state: rendered
   register: rendered
+  tags:
+  - mariadb
+  - deploy_db
+  - liquorlab
 
-- name: Launch Database application
+- name: Launch Database application - LiquorLab
   k8s:
     namespace: "{{ ml_project_namespace }}"
     state: present
     definition: "{{ item }}"
   loop: '{{ rendered.resources }}'
+  tags:
+  - mariadb
+  - deploy_db
+  - liquorlab
 
-- name: Wait for the database to come up
+- name: Wait for the database to come up - LiquorLab
   k8s_info:
     api_version: v1
     kind: Pod
@@ -207,8 +272,12 @@
   retries: 200
   delay: 10
   until: r_db_pod.resources | list | length == 1
+  tags:
+  - mariadb
+  - deploy_db
+  - liquorlab
 
-- name: Populate the database
+- name: Populate the database - LiquorLab
   k8s:
     namespace: "{{ ml_project_namespace }}"
     state: present
@@ -240,6 +309,99 @@
               - "-e"
               - "CREATE TABLE images_uploaded(time TIMESTAMP, name VARCHAR(255));CREATE TABLE images_processed(time TIMESTAMP, name VARCHAR(255), model VARCHAR(10), label VARCHAR(20));CREATE TABLE images_anonymized(time TIMESTAMP, name VARCHAR(255));INSERT INTO images_uploaded(time,name) SELECT CURRENT_TIMESTAMP(), '';INSERT INTO images_processed(time,name,model,label) SELECT CURRENT_TIMESTAMP(), '', '','';INSERT INTO images_anonymized(time,name) SELECT CURRENT_TIMESTAMP(), '';"
             restartPolicy: OnFailure
+  tags:
+  - mariadb
+  - populate_db
+  - liquorlab
+
+####################################################### DATABASES - xraylab
+
+- name: Create database application - xraylab
+  community.okd.openshift_process:
+    name: mariadb-ephemeral
+    namespace: openshift
+    parameters:
+      NAMESPACE: openshift
+      DATABASE_SERVICE_NAME: xraylabdb
+      MYSQL_USER: xraylab
+      MYSQL_PASSWORD: xraylab
+      MYSQL_ROOT_PASSWORD: xraylab
+      MYSQL_DATABASE: xraylabdb
+    state: rendered
+  register: xraylab_rendered
+  tags:
+  - mariadb
+  - deploy_db
+  - xraylab
+
+- name: Launch Database application - xraylab
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    definition: "{{ item }}"
+  loop: '{{ xraylab_rendered.resources }}'
+  tags:
+  - mariadb
+  - deploy_db
+  - xraylab
+
+- name: Wait for the database to come up - xraylab
+  k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ ml_project_namespace }}"
+    label_selectors:
+      - deploymentconfig = xraylabdb
+      - name = xraylabdb
+    field_selectors:
+      - status.phase=Running
+  register: r_db_pod
+  retries: 200
+  delay: 10
+  until: r_db_pod.resources | list | length == 1
+  tags:
+  - mariadb
+  - deploy_db
+  - xraylab
+
+- name: Populate the database - xraylab
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    api_version: batch/v1
+    kind: Job
+    definition:
+      metadata:
+        name: dbpopulate-xraylabdb
+      spec:
+        parallelism: 1
+        completions: 1
+        activeDeadlineSeconds: 1800
+        backoffLimit: 6
+        template:
+          metadata:
+            name: dbpopulate-xraylabdb
+          spec:
+            containers:
+            - name: dbpopulate-xraylabdb
+              image: mariadb
+              command:
+              - mysql
+              - "-h"
+              - xraylabdb
+              - "-u"
+              - root
+              - "--password=xraylab"
+              - xraylabdb
+              - "-e"
+              - "CREATE TABLE images_uploaded(time TIMESTAMP, name VARCHAR(255));CREATE TABLE images_processed(time TIMESTAMP, name VARCHAR(255), model VARCHAR(10), label VARCHAR(20));CREATE TABLE images_anonymized(time TIMESTAMP, name VARCHAR(255));INSERT INTO images_uploaded(time,name) SELECT CURRENT_TIMESTAMP(), '';INSERT INTO images_processed(time,name,model,label) SELECT CURRENT_TIMESTAMP(), '', '','';INSERT INTO images_anonymized(time,name) SELECT CURRENT_TIMESTAMP(), '';"
+            restartPolicy: OnFailure
+  tags:
+  - mariadb
+  - populate_db
+  - xraylab
+
+####################################################### KAFKA - Cluster
 
 - name: Create a Kafka Cluster
   k8s:
@@ -289,7 +451,9 @@
   delay: 10
   until: r_kafka_pod.resources[0].status.readyReplicas == r_kafka_pod.resources[0].status.replicas
 
-- name: Create a Kafka Topic
+####################################################### KAFKA - Topics
+
+- name: Create a Kafka Topic - liquor-images
   k8s:
     api_version: kafka.strimzi.io/v1beta2
     kind: KafkaTopic
@@ -306,7 +470,26 @@
         partitions: 10
         replicas: 3
 
-- name: Create buckets and make them readable
+- name: Create a Kafka Topic - xray-images
+  k8s:
+    api_version: kafka.strimzi.io/v1beta2
+    kind: KafkaTopic
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      metadata:
+        name: xray-images
+        labels:
+          strimzi.io/cluster: my-cluster
+      spec:
+        config:
+          retention.ms: 604800000
+          segment.bytes: 1073741824
+        partitions: 10
+        replicas: 3
+
+####################################################### JOBS - bucket-worker
+
+- name: Create buckets and make them readable - Xray Lab
   k8s:
     namespace: "{{ ml_project_namespace }}"
     state: present
@@ -347,3 +530,886 @@
                 - "-c"
                 - "pip install boto3 && wget https://raw.githubusercontent.com/kenmoini/ocp4-ai-svc-libvirt/main/ansible/roles/ocp4-workloads-ml-liquorlab/files/python-create-buckets.py && python python-create-buckets.py"
             restartPolicy: OnFailure
+
+- name: Create buckets and make them readable - Liquor Lab
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    api_version: batch/v1
+    kind: Job
+    definition:
+      metadata:
+        name: bucket-worker-liquor
+      spec:
+        parallelism: 1
+        completions: 1
+        activeDeadlineSeconds: 1800
+        backoffLimit: 6
+        template:
+          metadata:
+            name: bucket-worker-liquor
+          spec:
+            containers:
+            - name: bucket-worker-liquor
+              image: registry.access.redhat.com/ubi8/python-36
+              env:
+              - name: S3_ENDPOINT_URL
+                value: 'http://ceph-nano-0'
+              - name: BASE_BUCKET_NAME
+                value: liquor-images
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_ACCESS_KEY_ID
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_SECRET_ACCESS_KEY
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "pip install boto3 && wget https://raw.githubusercontent.com/kenmoini/ocp4-ai-svc-libvirt/main/ansible/roles/ocp4-workloads-ml-liquorlab/files/python-create-buckets.py && python python-create-buckets.py"
+            restartPolicy: OnFailure
+
+####################################################### ImageStreams
+
+- name: Create image-server ImageStream
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: ImageStream
+    api_version: image.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+        name: image-server
+        labels:
+          app: image-server
+          app.kubernetes.io/component: image-server
+          app.kubernetes.io/instance: image-server
+      spec:
+        lookupPolicy:
+          local: false
+
+- name: Create liquor-image-server ImageStream
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: ImageStream
+    api_version: image.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+        name: liquor-image-server
+        labels:
+          app: liquor-image-server
+          app.kubernetes.io/component: liquor-image-server
+          app.kubernetes.io/instance: liquor-image-server
+      spec:
+        lookupPolicy:
+          local: false
+
+- name: Create image-generator ImageStream
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: ImageStream
+    api_version: image.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+        name: image-generator
+        labels:
+          app: image-generator
+          app.kubernetes.io/component: image-generator
+          app.kubernetes.io/instance: image-generator
+      spec:
+        lookupPolicy:
+          local: false
+
+- name: Create liquor-image-generator ImageStream
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: ImageStream
+    api_version: image.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+        name: liquor-image-generator
+        labels:
+          app: liquor-image-generator
+          app.kubernetes.io/component: liquor-image-generator
+          app.kubernetes.io/instance: liquor-image-generator
+      spec:
+        lookupPolicy:
+          local: false
+
+- name: Create risk-assessment ImageStream
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: ImageStream
+    api_version: image.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+        name: risk-assessment
+        labels:
+          app: risk-assessment
+          app.kubernetes.io/component: risk-assessment
+          app.kubernetes.io/instance: risk-assessment
+      spec:
+        lookupPolicy:
+          local: false
+
+- name: Create liquor-classifier ImageStream
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: ImageStream
+    api_version: image.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+        name: liquor-classifier
+        labels:
+          app: liquor-classifier
+          app.kubernetes.io/component: liquor-classifier
+          app.kubernetes.io/instance: liquor-classifier
+      spec:
+        lookupPolicy:
+          local: false
+
+####################################################### BuildConfigs
+
+- name: Create image-generator BuildConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    definition:
+      metadata:
+        name: image-generator
+        labels:
+          app: image-generator
+      spec:
+        strategy:
+          type: Docker
+          dockerStrategy:
+            dockerfilePath: Dockerfile
+        source:
+          type: Git
+          git:
+            uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+            ref: main
+          contextDir: /services/image-generator
+
+- name: Create liquor-image-generator BuildConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    definition:
+      metadata:
+        name: liquor-image-generator
+        labels:
+          app: liquor-image-generator
+      spec:
+        strategy:
+          type: Docker
+          dockerStrategy:
+            dockerfilePath: Dockerfile
+        source:
+          type: Git
+          git:
+            uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+            ref: main
+          contextDir: /services/liquor-image-generator
+
+- name: Create image-server BuildConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    definition:
+      metadata:
+        name: image-server
+        labels:
+          app: image-server
+      spec:
+        strategy:
+          type: Docker
+          dockerStrategy:
+            dockerfilePath: Dockerfile
+        source:
+          type: Git
+          git:
+            uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+            ref: main
+          contextDir: /services/image-server
+
+- name: Create liquor-image-server BuildConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    definition:
+      metadata:
+        name: liquor-image-server
+        labels:
+          app: liquor-image-server
+      spec:
+        strategy:
+          type: Docker
+          dockerStrategy:
+            dockerfilePath: Dockerfile
+        source:
+          type: Git
+          git:
+            uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+            ref: main
+          contextDir: /services/liquor-image-server
+
+- name: Create Pipeline App BuildConfig - Risk Assessment
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    definition:
+      metadata:
+        name: risk-assessment
+        labels:
+          app: risk-assessment
+      spec:
+        strategy:
+          type: Docker
+          dockerStrategy:
+            dockerfilePath: Dockerfile
+        source:
+          type: Git
+          git:
+            uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+            ref: main
+          contextDir: /services/risk-assessment
+
+- name: Create Pipeline App BuildConfig - Liquor Classifier
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    state: present
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    definition:
+      metadata:
+        name: liquor-classifier
+        labels:
+          app: liquor-classifier
+      spec:
+        strategy:
+          type: Docker
+          dockerStrategy:
+            dockerfilePath: Dockerfile
+        source:
+          type: Git
+          git:
+            uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
+            ref: main
+          contextDir: /services/liquor-classifier
+
+####################################################### BuildConfig Info
+
+- name: Get lastVersion of image-generator BuildConfig
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    name: image-generator
+  register: image_gen_r
+
+- name: Get lastVersion of image-server BuildConfig
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    name: image-server
+  register: image_srv_r
+
+- name: Get lastVersion of risk-assessment BuildConfig
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    name: risk-assessment
+  register: risk_ass_r
+
+- name: Get lastVersion of liquor-image-generator BuildConfig
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    name: liquor-image-generator
+  register: liquor_image_gen_r
+
+- name: Get lastVersion of liquor-image-server BuildConfig
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    name: liquor-image-server
+  register: liquor_image_srv_r
+
+- name: Get lastVersion of liquor-classifier BuildConfig
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: BuildConfig
+    api_version: build.openshift.io/v1
+    name: liquor-classifier
+  register: liq_class_r
+
+####################################################### Builds
+- name: Create new Builds
+  block:
+  - name: Create image-generator Build
+    k8s:
+      namespace: "{{ ml_project_namespace }}"
+      kind: Build
+      state: present
+      api_version: build.openshift.io/v1
+      definition:
+        metadata:
+          annotations:
+            openshift.io/build-config.name: image-generator
+            openshift.io/build.number: '{{ (image_gen_r.resources[0].status.lastVersion|int + 1) }}'
+            openshift.io/build.pod-name: "image-generator-{{ (image_gen_r.resources[0].status.lastVersion|int + 1) }}-build"
+          name: "image-generator-{{ (image_gen_r.resources[0].status.lastVersion|int + 1) }}"
+          ownerReferences:
+            - apiVersion: build.openshift.io/v1
+              kind: BuildConfig
+              uid: "{{ image_gen_r.resources[0].metadata.uid }}"
+              name: image-generator
+              controller: true
+          labels:
+            app: image-generator
+            buildconfig: image-generator
+            openshift.io/build-config.name: image-generator
+            openshift.io/build.start-policy: Serial
+        spec:
+          output:
+            to:
+              kind: ImageStreamTag
+              name: 'image-generator:latest'
+            pushSecret:
+              name: builder-dockercfg-f6v2z
+          strategy:
+            type: Docker
+            dockerStrategy:
+              dockerfilePath: Dockerfile
+          serviceAccount: builder
+          source:
+            type: Git
+            git:
+              uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+              ref: main
+            contextDir: /services/image-generator
+    when: run_new_builds_if_already_built|bool or image_gen_r.resources[0].status.lastVersion|int == 0
+
+  - name: Create image-server Build
+    k8s:
+      namespace: "{{ ml_project_namespace }}"
+      kind: Build
+      state: present
+      api_version: build.openshift.io/v1
+      definition:
+        metadata:
+          annotations:
+            openshift.io/build-config.name: image-server
+            openshift.io/build.number: '{{ (image_srv_r.resources[0].status.lastVersion|int + 1) }}'
+            openshift.io/build.pod-name: "image-server-{{ (image_srv_r.resources[0].status.lastVersion|int + 1) }}-build"
+          name: "image-server-{{ (image_srv_r.resources[0].status.lastVersion|int + 1) }}"
+          ownerReferences:
+            - apiVersion: build.openshift.io/v1
+              kind: BuildConfig
+              uid: "{{ image_srv_r.resources[0].metadata.uid }}"
+              name: image-server
+              controller: true
+          labels:
+            app: image-server
+            buildconfig: image-server
+            openshift.io/build-config.name: image-server
+            openshift.io/build.start-policy: Serial
+        spec:
+          output:
+            to:
+              kind: ImageStreamTag
+              name: 'image-server:latest'
+            pushSecret:
+              name: builder-dockercfg-f6v2z
+          strategy:
+            type: Docker
+            dockerStrategy:
+              dockerfilePath: Dockerfile
+          serviceAccount: builder
+          source:
+            type: Git
+            git:
+              uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+              ref: main
+            contextDir: /services/image-server
+    when: run_new_builds_if_already_built|bool or image_srv_r.resources[0].status.lastVersion|int == 0
+
+  - name: Create risk-assessment Build
+    k8s:
+      namespace: "{{ ml_project_namespace }}"
+      kind: Build
+      state: present
+      api_version: build.openshift.io/v1
+      definition:
+        metadata:
+          annotations:
+            openshift.io/build-config.name: risk-assessment
+            openshift.io/build.number: '{{ (risk_ass_r.resources[0].status.lastVersion|int + 1) }}'
+            openshift.io/build.pod-name: "risk-assessment-{{ (risk_ass_r.resources[0].status.lastVersion|int + 1) }}-build"
+          name: "risk-assessment-{{ (risk_ass_r.resources[0].status.lastVersion|int + 1) }}"
+          ownerReferences:
+            - apiVersion: build.openshift.io/v1
+              kind: BuildConfig
+              uid: "{{ risk_ass_r.resources[0].metadata.uid }}"
+              name: risk-assessment
+              controller: true
+          labels:
+            app: risk-assessment
+            buildconfig: risk-assessment
+            openshift.io/build-config.name: risk-assessment
+            openshift.io/build.start-policy: Serial
+        spec:
+          output:
+            to:
+              kind: ImageStreamTag
+              name: 'risk-assessment:latest'
+            pushSecret:
+              name: builder-dockercfg-f6v2z
+          strategy:
+            type: Docker
+            dockerStrategy:
+              dockerfilePath: Dockerfile
+          serviceAccount: builder
+          source:
+            type: Git
+            git:
+              uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+              ref: main
+            contextDir: /services/risk-assessment
+    when: run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0
+
+  ####################################################### BUILDS - Update lastVersion
+      
+  - name: Set facts for image-generator update
+    set_fact:
+      targetObject: image-generator
+      targetNamespace: "{{ ml_project_namespace }}"
+      lastVersionUpdate: "{{ (image_gen_r.resources[0].status.lastVersion|int + 1)|int }}"
+    when: run_new_builds_if_already_built|bool or image_gen_r.resources[0].status.lastVersion|int == 0
+
+  - name: Update image-generator lastVersion
+    k8s:
+      state: present
+      merge_type:
+      - strategic-merge
+      - merge
+      definition: "{{ lookup('template', template_item ) | from_yaml }}"
+    loop:
+    - ./templates/buildconfig_update.yaml.j2
+    loop_control:
+      loop_var: template_item
+    when: run_new_builds_if_already_built|bool or image_gen_r.resources[0].status.lastVersion|int == 0
+      
+  - name: Set facts for image-server update
+    set_fact:
+      targetObject: image-server
+      targetNamespace: "{{ ml_project_namespace }}"
+      lastVersionUpdate: "{{ (image_srv_r.resources[0].status.lastVersion|int + 1)|int }}"
+    when: run_new_builds_if_already_built|bool or image_srv_r.resources[0].status.lastVersion|int == 0
+
+  - name: Update image-server lastVersion
+    k8s:
+      state: present
+      merge_type:
+      - strategic-merge
+      - merge
+      definition: "{{ lookup('template', template_item ) | from_yaml }}"
+    loop:
+    - ./templates/buildconfig_update.yaml.j2
+    loop_control:
+      loop_var: template_item
+    when: run_new_builds_if_already_built|bool or image_srv_r.resources[0].status.lastVersion|int == 0
+      
+  - name: Set facts for risk-assessment update
+    set_fact:
+      targetObject: risk-assessment
+      targetNamespace: "{{ ml_project_namespace }}"
+      lastVersionUpdate: "{{ (risk_ass_r.resources[0].status.lastVersion|int + 1)|int }}"
+    when: run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0
+
+  - name: Update risk-assessment lastVersion
+    k8s:
+      state: present
+      merge_type:
+      - strategic-merge
+      - merge
+      definition: "{{ lookup('template', template_item ) | from_yaml }}"
+    loop:
+    - ./templates/buildconfig_update.yaml.j2
+    loop_control:
+      loop_var: template_item
+    when: run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0
+
+####################################################### DeploymentConfigs
+
+- name: Create image-generator DeploymentConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    kind: DeploymentConfig
+    api_version: apps.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+        name: image-generator
+        labels:
+          app: image-generator
+          app.kubernetes.io/component: image-generator
+          app.kubernetes.io/instance: image-generator
+      spec:
+        strategy:
+          type: Rolling
+          rollingParams:
+            updatePeriodSeconds: 1
+            intervalSeconds: 1
+            timeoutSeconds: 600
+            maxUnavailable: 25%
+            maxSurge: 25%
+          resources: {}
+          activeDeadlineSeconds: 21600
+        triggers:
+          - type: ImageChange
+            imageChangeParams:
+              automatic: true
+              containerNames:
+                - image-generator
+              from:
+                kind: ImageStreamTag
+                namespace: "{{ ml_project_namespace }}"
+                name: 'image-generator:latest'
+          - type: ConfigChange
+        replicas: 1
+        selector:
+          app: image-generator
+          deploymentconfig: image-generator
+        template:
+          metadata:
+            creationTimestamp: null
+            labels:
+              app: image-generator
+              deploymentconfig: image-generator
+          spec:
+            containers:
+              - name: image-generator
+                image: "image-registry.openshift-image-registry.svc:5000/{{ ml_project_namespace }}/image-generator"
+                envFrom:
+                  - secretRef:
+                      name: ceph-nano-credentials
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            securityContext: {}
+            schedulerName: default-scheduler
+
+- name: Create image-server DeploymentConfig
+  k8s:
+    namespace: "{{ ml_project_namespace }}"
+    kind: DeploymentConfig
+    api_version: apps.openshift.io/v1
+    definition:
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+        name: image-server
+        labels:
+          app: image-server
+          app.kubernetes.io/component: image-server
+          app.kubernetes.io/instance: image-server
+      spec:
+        strategy:
+          type: Rolling
+          rollingParams:
+            updatePeriodSeconds: 1
+            intervalSeconds: 1
+            timeoutSeconds: 600
+            maxUnavailable: 25%
+            maxSurge: 25%
+          resources: {}
+          activeDeadlineSeconds: 21600
+        triggers:
+          - type: ImageChange
+            imageChangeParams:
+              automatic: true
+              containerNames:
+                - image-server
+              from:
+                kind: ImageStreamTag
+                namespace: "{{ ml_project_namespace }}"
+                name: 'image-server:latest'
+          - type: ConfigChange
+        replicas: 1
+        selector:
+          app: image-server
+          deploymentconfig: image-server
+        template:
+          metadata:
+            creationTimestamp: null
+            labels:
+              app: image-server
+              deploymentconfig: image-server
+          spec:
+            containers:
+              - name: image-server
+                image: "image-registry.openshift-image-registry.svc:5000/{{ ml_project_namespace }}/image-server"
+                envFrom:
+                  - secretRef:
+                      name: ceph-nano-credentials
+                terminationMessagePath: /dev/termination-log
+                terminationMessagePolicy: File
+                imagePullPolicy: Always
+            restartPolicy: Always
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirst
+            securityContext: {}
+            schedulerName: default-scheduler
+
+####################################################### SERVICES
+
+- name: Create image-server Service
+  k8s:
+    state: present
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        annotations:
+          app.openshift.io/vcs-ref: main
+          app.openshift.io/vcs-uri: 'https://github.com/msolberg/machine-learning-workshop-labs'
+        name: image-server
+        namespace: "{{ ml_project_namespace }}"
+        labels:
+          app: image-server
+          app.kubernetes.io/component: image-server
+          app.kubernetes.io/instance: image-server
+      spec:
+        ports:
+          - name: 5000-tcp
+            protocol: TCP
+            port: 5000
+            targetPort: 5000
+        selector:
+          app: image-server
+          deploymentconfig: image-server
+        type: ClusterIP
+        sessionAffinity: None
+
+- name: Create image-server Route
+  k8s:
+    state: present
+    definition:
+      kind: Route
+      apiVersion: route.openshift.io/v1
+      metadata:
+        name: image-server
+        namespace: "{{ ml_project_namespace }}"
+      spec:
+        to:
+          kind: Service
+          name: image-server
+          weight: 100
+        port:
+          targetPort: "5000-tcp"
+        wildcardPolicy: None
+
+- name: Get image-server Route
+  k8s_info:
+    kind: Route
+    api_version: route.openshift.io/v1
+    name: image-server
+    namespace: "{{ ml_project_namespace }}"
+  register: image_srv_route_r
+
+####################################################### SERVERLESS - risk-assessment
+
+- name: Wait for the risk-assessment Build to finish
+  k8s_info:
+    namespace: "{{ ml_project_namespace }}"
+    kind: Build
+    api_version: build.openshift.io/v1
+    name: "risk-assessment-{{ (risk_ass_r.resources[0].status.lastVersion|int + 1)|int }}"
+  register: risk_ass_build_wait_r
+  until: risk_ass_build_wait_r.resources[0].status.phase == "Complete"
+  retries: 120
+  delay: 30
+  when: wait_for_service_build|bool
+  
+- name: Create risk-assessment Knative Service
+  k8s:
+    state: present
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      metadata:
+        name: risk-assessment
+      spec:
+        template:
+          metadata:
+            annotations:
+              autoscaling.knative.dev/maxScale: '2'
+              autoscaling.knative.dev/target: '2'
+              revisionTimestamp: ''
+          spec:
+            timeoutSeconds: 30
+            containers:
+            - image: 'image-registry.openshift-image-registry.svc:5000/{{ ml_project_namespace }}/risk-assessment:latest'
+              ports:
+                - containerPort: 5000
+              env:
+              - name: model_version
+                value: 'v1'
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_ACCESS_KEY_ID
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: ceph-nano-credentials
+                    key: AWS_SECRET_ACCESS_KEY
+              resources:
+                limits:
+                  cpu: 600m
+                  memory: 600M
+                requests:
+                  cpu: 400m
+                  memory: 500M
+
+- name: Create risk-assessment Knative Kafka Source
+  k8s:
+    state: present
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      apiVersion: sources.knative.dev/v1beta1
+      kind: KafkaSource
+      metadata:
+        name: xray-images
+      spec:
+        consumerGroup: risk-assessment
+        bootstrapServers:
+          - my-cluster-kafka-bootstrap:9092
+        topics:
+          - xray-images
+        sink:
+          ref:
+            apiVersion: serving.knative.dev/v1
+            kind: Service
+            name: risk-assessment
+
+####################################################### GRAFANA - Datasources
+
+- name: Deploy Grafana MySQL Datasource - Xraylab
+  k8s:
+    state: present
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      apiVersion: integreatly.org/v1alpha1
+      kind: GrafanaDataSource
+      metadata:
+        name: mysql-grafana-datasource
+      spec:
+        datasources:
+          - type: mysql
+            name: MySQL
+            access: proxy
+            url: xraylabdb
+            database: xraylabdb
+            user: xraylab
+            password: xraylab
+        name: grafana-mysql-datasource.yaml
+
+- name: Deploy Grafana MySQL Datasource - Liquorlab
+  k8s:
+    state: present
+    namespace: "{{ ml_project_namespace }}"
+    definition:
+      apiVersion: integreatly.org/v1alpha1
+      kind: GrafanaDataSource
+      metadata:
+        name: liquormysql-grafana-datasource
+      spec:
+        datasources:
+          - type: mysql
+            name: LiquorMySQL
+            access: proxy
+            url: liquorlabdb
+            database: liquorlabdb
+            user: liquorlab
+            password: liquorlab
+        name: grafana-liquormysql-datasource.yaml
+
+####################################################### GRAFANA - Dashboards
+
+- name: Create Grafana Dashboards
+  community.okd.openshift_process:
+    namespace_target: "{{ ml_project_namespace }}"
+    parameters:
+      namespace: "{{ ml_project_namespace }}"
+    state: present
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
+  loop:
+  - ./files/xray-grafana-dashboard.yaml
+  - ./files/liquor-grafana-dashboard.yaml
+  loop_control:
+    loop_var: file_item
+
+#- name: Launch Grafana Dashboard - Xray Lab
+#  k8s:
+#    namespace: "{{ ml_project_namespace }}"
+#    state: present
+#    definition: "{{ item }}"
+#  loop: '{{ rendered.resources }}'
+
+- name: Display needed resources
+  debug:
+    msg:
+      - Machine Learning Pipeline Demo successfully launched!
+      - "Image Server: http://{{ image_srv_route_r.resources[0].status.ingress[0].host }}"

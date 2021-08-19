@@ -11,6 +11,7 @@
     deployment_name: ""
     compiled_uri_headers:
       User-Agent: AnsibleAutomation/4.2
+    ml_project_namespace: liquor-ml
 
   tasks:
     - name: Read in variables
