@@ -7,10 +7,30 @@
     api_version: project.openshift.io/v1
     definition:
       metadata:
-        name: "{{ item }}"
+        name: "{{ ns_item }}"
   loop:
     - "knative-serving"
     - "knative-eventing"
+  loop_control:
+    loop_var: ns_item
+
+- name: Create Namespace/Project for Openshift Serverless
+  k8s:
+    state: present
+    kind: Namespace
+    api_version: v1
+    merge_type:
+    - strategic-merge
+    - merge
+    definition:
+      metadata:
+        name: "openshift-serverless"
+        annotations:
+          openshift.io/description: "OpenShift Serverless with Knative"
+          openshift.io/display-name: "OpenShift Serverless"
+        labels:
+          openshift.io/cluster-monitoring: "true"
+      spec: {}
 
 # Setup OpenShift Serverless via operator
 - name: Create OpenShift Objects for serverless
@@ -21,6 +41,7 @@
     - merge
     definition: "{{ lookup('file', item ) | from_yaml }}"
   loop:
+  - ./files/serverless_operatorgroup.yaml
   - ./files/serverless_subscription.yaml
 
 # wait for serverless CRDs

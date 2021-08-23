@@ -21,6 +21,26 @@
           - 'yaml'
           - 'yml'
 
+    - name: Wait for the Kafka cluster to come up
+      k8s_info:
+        api_version: apps/v1
+        kind: StatefulSet
+        namespace: "{{ ml_project_namespace }}"
+        name: my-cluster-zookeeper
+      register: r_kafka_pod
+      retries: 200
+      delay: 10
+      until: r_kafka_pod.resources[0].status.readyReplicas == r_kafka_pod.resources[0].status.replicas
+
+
+    - name: d
+      debug:
+        msg: "{{ r_kafka_pod }}"
+
+    - name: f
+      fail:
+        msg: g
+
     - name: inc
       include_role:
         name: ocp4-workloads-ml-liquorlab

@@ -10,11 +10,15 @@
 
 - name: set cluster_version
   set_fact:
-    cluster_version: "{{ r_cluster_version.resources[0].status.desired.version }}"
+    cluster_version_long: "{{ r_cluster_version.resources[0].status.desired.version|string }}"
+
+- name: set cluster_version_split
+  set_fact:
+    cluster_version_split: "{{ cluster_version_long.split('.') }}"
 
 - name: set cluster_version_short
   set_fact:
-    cluster_version_short: "{{ cluster_version.split('.')[0] + '.' + cluster_version.split('.')[1] }}"
+    cluster_version_short: "{{ cluster_version_split[0] + '.' + cluster_version_split[1] }}"
 
 - name: create project for GPU Operator
   k8s:

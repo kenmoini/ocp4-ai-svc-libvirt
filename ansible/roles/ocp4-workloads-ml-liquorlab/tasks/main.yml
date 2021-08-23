@@ -251,8 +251,10 @@
   k8s:
     namespace: "{{ ml_project_namespace }}"
     state: present
-    definition: "{{ item }}"
+    definition: "{{ db_item }}"
   loop: '{{ rendered.resources }}'
+  loop_control:
+    loop_var: db_item
   tags:
   - mariadb
   - deploy_db
@@ -340,7 +342,9 @@
   k8s:
     namespace: "{{ ml_project_namespace }}"
     state: present
-    definition: "{{ item }}"
+    definition: "{{ db_item }}"
+  loop_control:
+    loop_var: db_item
   loop: '{{ xraylab_rendered.resources }}'
   tags:
   - mariadb
@@ -443,6 +447,10 @@
           storage:
             type: ephemeral
           replicas: 3
+
+- name: Wait for 30s
+  pause:
+    seconds: 30
 
 - name: Wait for the Kafka cluster to come up
   k8s_info:
@@ -1988,25 +1996,16 @@
   loop_control:
     loop_var: template_item
 
-- name: Get JupyterHub container info
-  k8s_info:
-    kind: Pod
-    label_selectors:
-      - app=jupyterhub
-      - component=singleuser-server
-  register: jupyterhub_pod_r
-
-- name: Set vars for pod/jupyterhub labeling
+- name: Set vars for ss/ceph-nano labeling
   set_fact:
     targetNamespace: "{{ ml_project_namespace }}"
-    targetKind: Pod
-    targetAPIVersion: v1
-    targetObject: "{{ jupyterhub_pod_r.resources[0].metadata.name }}"
+    targetKind: StatefulSet
+    targetAPIVersion: apps/v1
+    targetObject: ceph-nano
     targetLabels:
-      app.openshift.io/runtime: python
       app.kubernetes.io/part-of: OpenDataHub
 
-- name: Update Labels for dc/jupyterhub
+- name: Update Labels for ss/ceph-nano
   k8s:
     state: present
     merge_type:
@@ -2017,6 +2016,41 @@
   - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
   loop_control:
     loop_var: template_item
+
+- name: Get JupyterHub container info
+  k8s_info:
+    kind: Pod
+    label_selectors:
+      - app = jupyterhub
+      - component = singleuser-server
+  register: jupyterhub_pod_r
+  ignore_errors: true
+
+- name: Set vars for pod/jupyterhub labeling
+  set_fact:
+    targetNamespace: "{{ ml_project_namespace }}"
+    targetKind: Pod
+    targetAPIVersion: v1
+    targetObject: "{{ jupyterhub_pod_r.resources[0].metadata.name }}"
+    targetLabels:
+      app.openshift.io/runtime: python
+      app.kubernetes.io/part-of: OpenDataHub
+  ignore_errors: true
+  when: jupyterhub_pod_r|length > 0
+
+- name: Update Labels for pod/jupyterhub
+  k8s:
+    state: present
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', template_item ) | from_yaml }}"
+  loop:
+  - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
+  loop_control:
+    loop_var: template_item
+  ignore_errors: true
+  when: jupyterhub_pod_r|length > 0
 
 ####################################################### COMPLETE!
 
