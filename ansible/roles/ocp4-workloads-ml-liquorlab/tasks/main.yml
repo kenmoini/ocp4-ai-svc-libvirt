@@ -1696,7 +1696,7 @@
     api_version: build.openshift.io/v1
     name: "risk-assessment-{{ (risk_ass_r.resources[0].status.lastVersion|int + 1)|int }}"
   register: risk_ass_build_wait_r
-  until: risk_ass_r.resources[0].status.phase == "Complete"
+  until: risk_ass_build_wait_r.resources[0].status.phase == "Complete"
   retries: 120
   delay: 30
   when: wait_for_service_build|bool and (run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0)
@@ -1708,7 +1708,7 @@
     api_version: build.openshift.io/v1
     name: "liquor-classifier-{{ (liq_class_r.resources[0].status.lastVersion|int + 1)|int }}"
   register: liq_class_build_wait_r
-  until: liq_class_r.resources[0].status.phase == "Complete"
+  until: liq_class_build_wait_r.resources[0].status.phase == "Complete"
   retries: 120
   delay: 30
   when: wait_for_service_build|bool and (run_new_builds_if_already_built|bool or liq_class_r.resources[0].status.lastVersion|int == 0)
@@ -2035,8 +2035,7 @@
     targetLabels:
       app.openshift.io/runtime: python
       app.kubernetes.io/part-of: OpenDataHub
-  ignore_errors: true
-  when: jupyterhub_pod_r|length > 0
+  when: jupyterhub_pod_r.resources|length > 0
 
 - name: Update Labels for pod/jupyterhub
   k8s:
@@ -2049,8 +2048,7 @@
   - ./roles/ocp4-workloads-ml-liquorlab/templates/label_update.yaml.j2
   loop_control:
     loop_var: template_item
-  ignore_errors: true
-  when: jupyterhub_pod_r|length > 0
+  when: jupyterhub_pod_r.resources|length > 0
 
 ####################################################### COMPLETE!
 
