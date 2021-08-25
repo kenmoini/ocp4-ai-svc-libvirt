@@ -1,4 +1,4 @@
-apiVersion: template.openshift.io/v1
+apiVersion: v1
 kind: Template
 metadata:
   name: grafana-liquorlab-dashboard-template
@@ -29,7 +29,7 @@ objects:
           "editable": true,
           "gnetId": null,
           "graphTooltip": 0,
-          "id": 6,
+          "id": 5,
           "iteration": 1620244394725,
           "links": [
 
@@ -37,7 +37,7 @@ objects:
           "panels": [
               {
                   "bgColor": null,
-                  "bgURL": "https://github.com/guimou/datapipelines/raw/main/demos/xray-pipeline-lab/grafana/xraylab-dashboard-panel.png",
+                  "bgURL": "https://github.com/kenmoini/machine-learning-workshop-labs/raw/main/dashboards/pipelineBkg.png",
                   "boxes": [
                       {
                           "angle": "0",
@@ -82,28 +82,6 @@ objects:
                           "usingThresholds": false,
                           "xpos": "250",
                           "ypos": "75"
-                      },
-                      {
-                          "angle": 0,
-                          "color": "#1F60C4",
-                          "colorHigh": "#f00",
-                          "colorLow": "#0f0",
-                          "colorMedium": "#fa1",
-                          "decimal": 1,
-                          "fontsize": "30",
-                          "hasOrb": false,
-                          "isBlinking": false,
-                          "orbHideText": false,
-                          "orbLocation": "Left",
-                          "orbSize": "10",
-                          "prefixSize": 10,
-                          "serie": "images_anonymized",
-                          "suffixSize": 10,
-                          "text": "N/A",
-                          "thresholds": "20,60",
-                          "usingThresholds": false,
-                          "xpos": "470",
-                          "ypos": "298"
                       }
                   ],
                   "datasource": "LiquorMySQL",
@@ -181,38 +159,6 @@ objects:
                           "rawQuery": true,
                           "rawSql": "SELECT time,count(name)-1 AS \"images_processed\"\nFROM images_processed",
                           "refId": "B",
-                          "select": [
-                              [
-                                  {
-                                      "params": [
-                                          "entry"
-                                      ],
-                                      "type": "column"
-                                  }
-                              ]
-                          ],
-                          "table": "merchant_upload",
-                          "timeColumn": "time",
-                          "timeColumnType": "timestamp",
-                          "where": [
-                              {
-                                  "name": "$__timeFilter",
-                                  "params": [
-
-                                  ],
-                                  "type": "macro"
-                              }
-                          ]
-                      },
-                      {
-                          "format": "time_series",
-                          "group": [
-
-                          ],
-                          "metricColumn": "none",
-                          "rawQuery": true,
-                          "rawSql": "SELECT time,count(name)-1 AS \"images_anonymized\"\nFROM images_anonymized",
-                          "refId": "C",
                           "select": [
                               [
                                   {
@@ -618,7 +564,7 @@ objects:
 
                   ],
                   "timeShift": null,
-                  "title": "Risk distribution",
+                  "title": "Distribution Analysis",
                   "tooltip": {
                       "shared": false,
                       "sort": 0,
@@ -816,124 +762,6 @@ objects:
                       "align": false,
                       "alignLevel": null
                   }
-              },
-              {
-                  "columns": [
-
-                  ],
-                  "datasource": "LiquorMySQL",
-                  "fieldConfig": {
-                      "defaults": {
-                          "custom": {
-                              "align": null,
-                              "filterable": false
-                          },
-                          "mappings": [
-
-                          ],
-                          "thresholds": {
-                              "mode": "absolute",
-                              "steps": [
-                                  {
-                                      "color": "green",
-                                      "value": null
-                                  },
-                                  {
-                                      "color": "red",
-                                      "value": 80
-                                  }
-                              ]
-                          }
-                      },
-                      "overrides": [
-
-                      ]
-                  },
-                  "fontSize": "100%",
-                  "gridPos": {
-                      "h": 7,
-                      "w": 8,
-                      "x": 12,
-                      "y": 14
-                  },
-                  "id": 20,
-                  "links": [
-
-                  ],
-                  "options": {
-                      "showHeader": true
-                  },
-                  "pageSize": null,
-                  "pluginVersion": "7.3.10",
-                  "scroll": true,
-                  "showHeader": true,
-                  "sort": {
-                      "col": 0,
-                      "desc": true
-                  },
-                  "styles": [
-                      {
-                          "alias": "Time",
-                          "align": "auto",
-                          "dateFormat": "YYYY-MM-DD HH:mm:ss",
-                          "pattern": "Time",
-                          "type": "date"
-                      },
-                      {
-                          "alias": "",
-                          "align": "auto",
-                          "colorMode": null,
-                          "colors": [
-                              "rgba(245, 54, 54, 0.9)",
-                              "rgba(237, 129, 40, 0.89)",
-                              "rgba(50, 172, 45, 0.97)"
-                          ],
-                          "decimals": 2,
-                          "pattern": "Metric",
-                          "thresholds": [
-
-                          ],
-                          "type": "hidden",
-                          "unit": "short"
-                      }
-                  ],
-                  "targets": [
-                      {
-                          "format": "table",
-                          "group": [
-
-                          ],
-                          "metricColumn": "none",
-                          "rawQuery": true,
-                          "rawSql": "SELECT * FROM images_anonymized WHERE name != '' ORDER by time DESC LIMIT 10",
-                          "refId": "A",
-                          "select": [
-                              [
-                                  {
-                                      "params": [
-                                          "value"
-                                      ],
-                                      "type": "column"
-                                  }
-                              ]
-                          ],
-                          "timeColumn": "time",
-                          "where": [
-                              {
-                                  "name": "$__timeFilter",
-                                  "params": [
-
-                                  ],
-                                  "type": "macro"
-                              }
-                          ]
-                      }
-                  ],
-                  "timeFrom": null,
-                  "timeShift": null,
-                  "title": "Last 10 anonymized images",
-                  "transform": "timeseries_to_rows",
-                  "type": "table"
               }
           ],
           "refresh": "5s",
@@ -1018,7 +846,7 @@ objects:
           },
           "timezone": "utc",
           "title": "Liquor Lab",
-          "uid": "MjGyQzOGk",
+          "uid": "MJGyQzjOk",
           "version": 1
       }
     name: liquorlab-dashboard.json
