@@ -21,27 +21,6 @@
           - 'yaml'
           - 'yml'
 
-
-    - name: Wait for the risk-assessment Build to finish
-      k8s_info:
-        namespace: "{{ ml_project_namespace }}"
-        kind: Build
-        api_version: build.openshift.io/v1
-        name: "risk-assessment-{{ (risk_ass_r.resources[0].status.lastVersion|int + 1)|int }}"
-      register: risk_ass_build_wait_r
-      until: risk_ass_r.resources[0].status.phase == "Complete"
-      retries: 120
-      delay: 30
-      when: wait_for_service_build|bool and (run_new_builds_if_already_built|bool or risk_ass_r.resources[0].status.lastVersion|int == 0)
-
-    - name: d
-      debug:
-        msg: "{{ r_kafka_pod }}"
-
-    - name: f
-      fail:
-        msg: g
-
     - name: inc
       include_role:
         name: ocp4-workloads-ml-liquorlab

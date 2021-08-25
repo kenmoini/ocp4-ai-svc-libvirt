@@ -462,6 +462,7 @@
   retries: 200
   delay: 10
   until: r_kafka_pod.resources[0].status.readyReplicas == r_kafka_pod.resources[0].status.replicas
+  ignore_errors: yes
 
 ####################################################### KAFKA - Topics
 
@@ -860,7 +861,7 @@
           git:
             uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
             ref: main
-          contextDir: /services/liquor-classifier
+          contextDir: /services/tf-liquor-classifier
 
 ####################################################### BuildConfig Info
 
@@ -1176,7 +1177,7 @@
             git:
               uri: 'https://github.com/kenmoini/machine-learning-workshop-labs'
               ref: main
-            contextDir: /services/liquor-classifier
+            contextDir: /services/tf-liquor-classifier
     when: run_new_builds_if_already_built|bool or liq_class_r.resources[0].status.lastVersion|int == 0
 
   ####################################################### BUILDS - Update lastVersion
@@ -1617,7 +1618,7 @@
         type: ClusterIP
         sessionAffinity: None
 
-####################################################### SERVICES
+####################################################### ROUTES
 
 - name: Create image-server Route
   k8s:
