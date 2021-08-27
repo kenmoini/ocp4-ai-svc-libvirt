@@ -6,9 +6,11 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
   loop:
   - ./files/opendatahub_subscription.yaml
+  loop_control:
+    loop_var: file_item
 
 # wait for odh CRDs
 - name: Wait for ODH CRD

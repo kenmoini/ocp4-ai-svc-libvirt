@@ -5,10 +5,12 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
   loop:
   - ./files/clusterlogging_operatorgroup.yaml
   - ./files/clusterlogging_subscription.yaml
+  loop_control:
+    loop_var: file_item
 
 - name: Wait for Cluster Logging CRD
   k8s_info:

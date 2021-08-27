@@ -39,10 +39,12 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
   loop:
   - ./files/serverless_operatorgroup.yaml
   - ./files/serverless_subscription.yaml
+  loop_control:
+    loop_var: file_item
 
 # wait for serverless CRDs
 - name: Wait for knative-serving CRD
@@ -71,9 +73,11 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
   loop:
   - ./files/knative_serving_cr.yaml
+  loop_control:
+    loop_var: file_item
 
 - name: Wait for knative-eventing project to exist
   k8s_info:
@@ -91,6 +95,8 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
   loop:
   - ./files/knative_eventing_cr.yaml
+  loop_control:
+    loop_var: file_item

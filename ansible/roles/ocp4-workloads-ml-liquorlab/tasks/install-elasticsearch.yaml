@@ -23,10 +23,12 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
   loop:
   - ./files/elastic_operatorgroup.yaml
   - ./files/elastic_subscription.yaml
+  loop_control:
+    loop_var: file_item
 
 - name: Wait for Elastic CRD
   k8s_info:

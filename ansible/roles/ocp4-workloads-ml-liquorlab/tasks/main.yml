@@ -1688,6 +1688,14 @@
     namespace: "{{ ml_project_namespace }}"
   register: jupyter_route_r
 
+- name: Get Web Console route
+  k8s_info:
+    api_version: route.openshift.io/v1
+    kind: Route
+    namespace: openshift-console
+    name: console
+  register: console_route_r
+
 ####################################################### SERVERLESS - risk-assessment
 
 - name: Wait for the risk-assessment Build to finish
@@ -2058,6 +2066,7 @@
     msg:
       - Machine Learning Pipeline Demo successfully launched!
       - "=================================================================="
+      - "- OpenShift Console: https://{{ console_route_r.resources[0].status.ingress[0].host }}"
       - "- Image Server: http://{{ image_srv_route_r.resources[0].status.ingress[0].host }}"
       - "- Liquor Image Server: http://{{ liquor_image_srv_route_r.resources[0].status.ingress[0].host }}"
       - "- Grafana Server: https://{{ grafana_route_r.resources[0].status.ingress[0].host }}"

@@ -124,4 +124,4 @@
     msg:
       - Infinite Mario successfully launched!
       - "=================================================================="
-      - "- Infinite Mario: http://{{ mario_route_r.resources[0].status.ingress[0].host }}"
+      - "- Infinite Mario: https://{{ mario_route_r.resources[0].status.ingress[0].host }}"

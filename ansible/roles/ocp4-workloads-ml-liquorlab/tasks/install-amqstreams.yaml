@@ -9,6 +9,8 @@
     definition: "{{ lookup('file', item ) | from_yaml }}"
   loop:
   - ./files/amqstreams_subscription.yaml
+  loop_control:
+    loop_var: file_item
 
 # wait for amq (kafka) CRDs
 - name: Wait for Kafka CRD
@@ -32,6 +34,8 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('file', item ) | from_yaml }}"
+    definition: "{{ lookup('file', file_item ) | from_yaml }}"
   loop:
   - ./files/knative_kafka_cr.yaml
+  loop_control:
+    loop_var: file_item
