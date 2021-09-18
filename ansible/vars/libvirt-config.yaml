@@ -14,8 +14,8 @@ libvirt_network:
 #libvirt_uri: "{{ libvirt_transport_type }}://{{ libvirt_user }}@{{ libvirt_endpoint }}/system{{ libvirt_options }}"
 
 ######################### Storage Options
-libvirt_base_iso_path: /mnt/nvme_7TB/nfs/isos
-libvirt_base_vm_path: /mnt/nvme_7TB/nfs/vms/raza
+libvirt_base_iso_path: /mnt/nvme_2TB/isos
+libvirt_base_vm_path: /mnt/nvme_2TB/VMs
 
 ######################### General Options
 libvirt_watch_for_vm_restart: false
