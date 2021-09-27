@@ -3,7 +3,7 @@
 {% for iHost in ai_svc_list_of_hosts.json %}
 {% set loopIndx = loop.index %}{% set hInventory = iHost.inventory|from_json %}
 {% for hIface in hInventory.interfaces %}
-    { "id": "{{ iHost.id }}", "role": "{% for vHost in cluster_nodes %}{% for iFace in vHost.interfaces %}{% if iFace.mac_address == hIface.mac_address %}{{ 'master' if vHost.type == "control-plane" else 'worker' }}{% endif %}{% endfor %}{% endfor %}" }{{ ',' if loopIndx != ai_svc_list_of_hosts.json|length else '' }}
+    { "id": "{{ iHost.id }}", "role": "{% for vHost in cluster_nodes %}{% for iFace in vHost.interfaces %}{% if iFace.mac_address|lower == hIface.mac_address|lower %}{{ 'master' if vHost.type == "control-plane" else 'worker' }}{% endif %}{% endfor %}{% endfor %}" }{{ ',' if loopIndx != ai_svc_list_of_hosts.json|length else '' }}
 {% endfor %}
 {% endfor %}
   ],
@@ -11,7 +11,7 @@
 {% for iHost in ai_svc_list_of_hosts.json %}
 {% set loopIndx = loop.index %}{% set hInventory = iHost.inventory|from_json %}
 {% for hIface in hInventory.interfaces %}
-    { "id": "{{ iHost.id }}", "hostname": "{% for vHost in cluster_nodes %}{% for iFace in vHost.interfaces %}{% if iFace.mac_address == hIface.mac_address %}{{ vHost.name }}{% endif %}{% endfor %}{% endfor %}" }{{ ',' if loopIndx != ai_svc_list_of_hosts.json|length else '' }}
+    { "id": "{{ iHost.id }}", "hostname": "{% for vHost in cluster_nodes %}{% for iFace in vHost.interfaces %}{% if iFace.mac_address|lower == hIface.mac_address|lower %}{{ vHost.name }}{% endif %}{% endfor %}{% endfor %}" }{{ ',' if loopIndx != ai_svc_list_of_hosts.json|length else '' }}
 {% endfor %}
 {% endfor %}
   ]
