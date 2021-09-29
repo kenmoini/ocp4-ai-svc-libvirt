@@ -113,6 +113,30 @@
             src: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
             dest: "{{ libvirt_base_iso_path }}/ocp_ai-{{ cluster_id }}.iso"
 
+    - name: Set core user password
+      block:      
+      - name: Get Discovery Ignition
+        uri:
+          headers: "{{ compiled_uri_headers }}"
+          url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/downloads/files?file_name=discovery.ign"
+          return_content: yes
+          method: GET
+          status_code: 200
+        register: set_cluster_discovery_ignition
+        until: set_cluster_discovery_ignition is not failed
+        retries: 30
+        delay: 10
+
+      - name: Set core password if still the default
+        block:
+        - name: Set core user password
+          include_tasks: tasks/ai_svc_set_core_user_password.yaml
+
+        - name: Re-Configure ISO Parameters to Regenerate Discovery Ignition
+          include_tasks: tasks/ai_svc_configure_iso_params.yaml
+        when: (set_cluster_discovery_ignition.content | from_json).passwd.users[0].passwordHash == '!'
+      when: core_user_password is defined
+
     - name: Create Libvirt Infrastructure
       block:
       - name: Create Disks via QEMU

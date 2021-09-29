@@ -24,6 +24,9 @@
         refresh_token: "{{ assisted_service_authentication_api_bearer_token }}"
     register: rh_sso_reg
     when: assisted_service_fqdn == "api.openshift.com"
+    until: rh_sso_reg is not failed
+    retries: 30
+    delay: 10
 
   - name: Set up temporary fact for RH Offline Token exchange
     set_fact:
