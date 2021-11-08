@@ -72,12 +72,12 @@ libvirt_base_vm_path: /var/lib/libvirt/images
 
 ### update libvirt-config.yaml networking 
 ```
- ######################### Local libvirt options
-  libvirt_uri: "qemu:///system"
-  libvirt_network:
-    type: bridge
-~   name: qubibr0
-    model: virtio
+######################### Local libvirt options
+libvirt_uri: "qemu:///system"
+libvirt_network:
+  type: bridge
+  name: qubibr0
+  model: virtio
 ```
 
 ### Copy and configure cluster-config.yaml
@@ -87,8 +87,14 @@ libvirt_base_vm_path: /var/lib/libvirt/images
 
 ### update the following 
 ```
+vim  vars/cluster-config.yaml
+
+cluster_version: 4.9
+
 cluster_name:
 cluster_domain: 
+
+
 
 ################################################## Cluster Networking
 # cluster_network_type = Default, Cilium, or Calico (TODO, only Default and Calico work atm)
@@ -110,6 +116,12 @@ cluster_network_cidr: 192.168.2.0/24
 cluster_network_host_prefix: 23
 ```
 
+### Testing: update kvm_libvirt_vm.xml.j2
+```
+vim templates/kvm_libvirt_vm.xml.j2
+    <type arch='x86_64' machine='pc-q35-rhel8.4.0'>hvm</type> #     <type arch='x86_64' machine='pc-q35-rhel8.2.0'>hvm</type>
+ was tested
+```
 
 
 ### Add api and load balancer entries to DNS
