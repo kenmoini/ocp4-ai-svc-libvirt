@@ -1,0 +1,6 @@
+---
+- name: Deploy the Infinite Mario Workload
+  hosts: all
+  tasks:
+    - name: Start deployment
+      include_tasks: tasks/main.yml
