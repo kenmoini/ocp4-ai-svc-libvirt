@@ -35,14 +35,14 @@
       cmd: "./run.sh"
       chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-registry/"
     environment:
-      NFS_PATH: "/nfs/ocpreg/{{ cluster_name }}"
+      NFS_PATH: "/nfs/fast/ocpreg/{{ cluster_name }}"
 
   - name: Run NFS StorageClass Script
     shell:
       cmd: "./run.sh"
       chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-storageclass/"
     environment:
-      NFS_PATH: "/nfs/ocp/{{ cluster_name }}"
+      NFS_PATH: "/nfs/fast/ocp/{{ cluster_name }}"
 
 #  - name: Deploy ACM
 #    block:

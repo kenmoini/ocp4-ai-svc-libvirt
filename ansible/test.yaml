@@ -12,15 +12,16 @@
     compiled_uri_headers:
       User-Agent: AnsibleAutomation/4.2
     ml_project_namespace: liquor-ml
+    cluster_version: "4.1"
 
   tasks:
-    - name: Read in variables
-      include_vars:
-        dir: vars
-        extensions:
-          - 'yaml'
-          - 'yml'
 
-    - name: inc
-      include_role:
-        name: ocp4-workloads-ml-liquorlab
+    - name: d old
+      debug:
+        msg: old
+      when: cluster_version is version('4.8', operator='le')
+
+    - name: d new
+      debug:
+        msg: new
+      when: cluster_version is version('4.9', operator='ge')

@@ -1,0 +1,81 @@
+apiVersion: nvidia.com/v1
+kind: ClusterPolicy
+metadata:
+  name: gpu-cluster-policy
+spec:
+  dcgmExporter:
+    affinity: {}
+    imagePullSecrets: []
+    nodeSelector: {}
+    podSecurityContext: {}
+    resources: {}
+    securityContext: {}
+    tolerations: []
+    image: dcgm-exporter
+    repository: nvcr.io/nvidia/k8s
+    version: 'sha256:ced606933cd2210768ee8488b624c64ac0bdce6f05d9c4b4210e251370a14ff8'
+  devicePlugin:
+    affinity: {}
+    args:
+      - '--mig-strategy=single'
+      - '--pass-device-specs=true'
+      - '--fail-on-init-error=true'
+      - '--device-list-strategy=envvar'
+      - '--nvidia-driver-root=/run/nvidia/driver'
+    imagePullSecrets: []
+    nodeSelector: {}
+    podSecurityContext: {}
+    resources: {}
+    securityContext: {}
+    tolerations: []
+    image: k8s-device-plugin
+    repository: nvcr.io/nvidia
+    version: 'sha256:ea353fe57628f4d3c3e1cda126455d02f2277e3ee92fa9da441d409d76b2ac92'
+  driver:
+    affinity: {}
+    imagePullSecrets: []
+    licensingConfig:
+      configMapName: ''
+    nodeSelector: {}
+    podSecurityContext: {}
+    repoConfig:
+      configMapName: ''
+      destinationDir: ''
+    resources: {}
+    securityContext: {}
+    tolerations: []
+    image: driver
+    repository: nvcr.io/nvidia
+    version: 'sha256:017d2e2a1bc410e9d2ac116683fc49a6f28e935cadee86e712cc147ea0239469'
+  gfd:
+    affinity: {}
+    imagePullSecrets: []
+    nodeSelector: {}
+    podSecurityContext: {}
+    resources: {}
+    securityContext: {}
+    tolerations: []
+    image: gpu-feature-discovery
+    migStrategy: single
+    repository: nvcr.io/nvidia
+    sleepInterval: 60s
+    version: 'sha256:bfc39d23568458dfd50c0c5323b6d42bdcd038c420fb2a2becd513a3ed3be27f'
+  operator:
+    validator:
+      imagePullSecrets: []
+      image: cuda-sample
+      repository: nvcr.io/nvidia/k8s
+      version: 'sha256:2a30fe7e23067bc2c3f8f62a6867702a016af2b80b9f6ce861f3fea4dfd85bc2'
+    defaultRuntime: crio
+    deployGFD: true
+  toolkit:
+    affinity: {}
+    imagePullSecrets: []
+    nodeSelector: {}
+    podSecurityContext: {}
+    resources: {}
+    securityContext: {}
+    tolerations: []
+    image: container-toolkit
+    repository: nvcr.io/nvidia/k8s
+    version: 'sha256:1cba398a04ec14a5dc3c6229e3674436fdcb574c329cff9ce5048099c8ff2fad'
