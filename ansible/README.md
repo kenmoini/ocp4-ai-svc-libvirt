@@ -46,7 +46,8 @@ Instead of hosting the Assisted Installer Service yourself, you can use the AI S
 To do so with this automation:
 
 1. Get an Offline Token: https://access.redhat.com/management/api
-2. Modify the `vars/assisted-service.yaml` variable file and define the following:
+2. Copy the ` cp example_vars/assisted-service.yaml vars/` 
+3. Modify the `vars/assisted-service.yaml` variable file and define the following:
 
 ```yaml
 assisted_service_fqdn: api.openshift.com
@@ -58,7 +59,7 @@ assisted_service_authentication_api_bearer_token: yourOfflineToken
 
 *The `bootstrap.yaml` Playbook will swap out the Offline Token for an ephemerial API token.*
 
-3. Make sure the hardware definition of your VMs meets the minimum required by the hosted service
+4. Make sure the hardware definition of your VMs meets the minimum required by the hosted service
 
 ## Running the Playbook
 

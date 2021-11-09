@@ -14,7 +14,7 @@ pull_secret: "{{ lookup('file', '~/pull-secret.txt') | to_json }}"
 ################################################## Cluster Basics
 # cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
 cluster_type: Standard
-cluster_version: 4.8
+cluster_version: 4.9
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,apps,*.apps}.cluster_name.cluster_domain exist
@@ -44,7 +44,7 @@ cluster_nodes:
   - name: cp-1
     type: control-plane
     vm:
-      disk_size: 60
+      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
@@ -64,7 +64,7 @@ cluster_nodes:
   - name: cp-2
     type: control-plane
     vm:
-      disk_size: 60
+      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
@@ -84,7 +84,7 @@ cluster_nodes:
   - name: cp-3
     type: control-plane
     vm:
-      disk_size: 60
+      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
@@ -104,7 +104,7 @@ cluster_nodes:
   - name: app-1
     type: application-node
     vm:
-      disk_size: 60
+      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
@@ -124,7 +124,7 @@ cluster_nodes:
   - name: app-2
     type: application-node
     vm:
-      disk_size: 60
+      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
@@ -144,7 +144,7 @@ cluster_nodes:
   - name: app-3
     type: application-node
     vm:
-      disk_size: 60
+      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1

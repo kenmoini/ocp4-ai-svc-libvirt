@@ -1,6 +1,8 @@
 ---
 collections:
-  - community.crypto
-  - community.libvirt
-  - community.okd
-  - kubernetes.core
+  - name: community.crypto
+  - name: community.libvirt
+  - name: community.okd
+    version: 2.0.1
+  - name: kubernetes.core
+    version: 2.1.0
