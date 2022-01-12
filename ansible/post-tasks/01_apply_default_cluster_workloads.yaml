@@ -30,19 +30,21 @@
 #      cmd: "./run.sh"
 #      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/matrix-login/"
 
-  - name: Run NFS Registry Script
-    shell:
-      cmd: "./run.sh"
-      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-registry/"
-    environment:
-      NFS_PATH: "/nfs/fast/ocpreg/{{ cluster_name }}"
-
-  - name: Run NFS StorageClass Script
-    shell:
-      cmd: "./run.sh"
-      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-storageclass/"
-    environment:
-      NFS_PATH: "/nfs/fast/ocp/{{ cluster_name }}"
+#  - name: Run NFS Registry Script
+#    shell:
+#      cmd: "./run.sh"
+#      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-registry/"
+#    environment:
+#      NFS_PATH: "/ocpnfs/{{ cluster_name }}"
+#      NFS_SERVER: deep-thought.kemo.labs
+#
+#  - name: Run NFS StorageClass Script
+#    shell:
+#      cmd: "./run.sh"
+#      chdir: "{{ generated_asset_directory }}/{{ cluster_id }}/tmp_checkout/homelab/openshift-quickstarts/cluster-init/nfs-storageclass/"
+#    environment:
+#      NFS_PATH: "/ocpnfs/{{ cluster_name }}"
+#      NFS_SERVER: deep-thought.kemo.labs
 
 #  - name: Deploy ACM
 #    block:
