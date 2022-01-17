@@ -8,6 +8,7 @@
     - curl
     - jq
     - git
+    - qemu-img
   
 - name: Fail if needed programs are not found
   fail:

@@ -141,6 +141,9 @@
       block:
       - name: Create Disks via QEMU
         include_tasks: tasks/libvirt_create_disks.yaml
+        loop: "{{ cluster_nodes }}"
+        loop_control:
+          loop_var: node
 
       - name: Detach devices from host system for VMs
         include_tasks: tasks/libvirt_detach_devices.yaml

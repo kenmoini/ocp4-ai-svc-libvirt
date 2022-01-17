@@ -1,8 +1,15 @@
 ---
-- name: Create disk images for OpenShift Nodes
-  command: "qemu-img create -f qcow2 {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2 {{ item.vm.disk_size }}G"
-  args:
-    creates: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
-  loop: "{{ cluster_nodes }}"
+- name: "Create disk images for OpenShift Node - {{ node.name }}"
+  command: "qemu-img create -f qcow2 {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2 {{ disk.size }}G"
+  loop: "{{ node.vm.disks }}"
   loop_control:
-    label: "{{ item.name }} @ {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+    loop_var: disk
+    label: "{{ node.name }} @ {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2"
+
+#- name: Create disk images for OpenShift Nodes
+#  command: "qemu-img create -f qcow2 {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2 {{ item.vm.disk_size }}G"
+#  args:
+#    creates: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+#  loop: "{{ cluster_nodes }}"
+#  loop_control:
+#    label: "{{ item.name }} @ {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"

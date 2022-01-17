@@ -44,11 +44,13 @@ cluster_nodes:
   - name: cp-1
     type: control-plane
     vm:
-      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
       memory: 16384
+      disks:
+        - size: 130
+          name: boot
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:11
@@ -64,11 +66,13 @@ cluster_nodes:
   - name: cp-2
     type: control-plane
     vm:
-      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
       memory: 16384
+      disks:
+        - size: 130
+          name: boot
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:12
@@ -84,11 +88,13 @@ cluster_nodes:
   - name: cp-3
     type: control-plane
     vm:
-      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
       memory: 16384
+      disks:
+        - size: 130
+          name: boot
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:13
@@ -104,11 +110,15 @@ cluster_nodes:
   - name: app-1
     type: application-node
     vm:
-      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
       memory: 32768
+      disks:
+        - size: 130
+          name: boot
+        - size: 130
+          name: odf
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:14
@@ -124,11 +134,15 @@ cluster_nodes:
   - name: app-2
     type: application-node
     vm:
-      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
       memory: 32768
+      disks:
+        - size: 130
+          name: boot
+        - size: 130
+          name: odf
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:15
@@ -144,11 +158,15 @@ cluster_nodes:
   - name: app-3
     type: application-node
     vm:
-      disk_size: 120
       cpu_cores: 4
       cpu_sockets: 1
       cpu_threads: 1
       memory: 32768
+      disks:
+        - size: 130
+          name: boot
+        - size: 130
+          name: odf
     #pci_devices:
     # A list of strings of PCI devices as reported by `sudo lspci -nn`
     #  - "81:00.0"

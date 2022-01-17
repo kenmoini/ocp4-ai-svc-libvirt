@@ -1,14 +1,14 @@
 <domain type='kvm'>
-  <name>{{ cluster_name }}-{{ item.name }}</name>
+  <name>{{ cluster_name }}-{{ node.name }}</name>
   <genid/>
   <metadata>
     <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
       <libosinfo:os id="http://fedoraproject.org/coreos/stable"/>
     </libosinfo:libosinfo>
   </metadata>
-  <memory unit='MiB'>{{ item.vm.memory }}</memory>
-  <currentMemory unit='MiB'>{{ item.vm.memory }}</currentMemory>
-  <vcpu placement='static'>{{ item.vm.cpu_cores * item.vm.cpu_sockets }}</vcpu>
+  <memory unit='MiB'>{{ node.vm.memory }}</memory>
+  <currentMemory unit='MiB'>{{ node.vm.memory }}</currentMemory>
+  <vcpu placement='static'>{{ node.vm.cpu_cores * node.vm.cpu_sockets }}</vcpu>
   <resource>
     <partition>/machine</partition>
   </resource>
@@ -25,7 +25,7 @@
     </kvm>
   </features>
   <cpu mode='host-passthrough' check='none' migratable='on'>
-    <topology sockets='{{ item.vm.cpu_sockets }}' dies='1' cores='{{ item.vm.cpu_cores }}' threads='{{ item.vm.cpu_threads }}'/>
+    <topology sockets='{{ node.vm.cpu_sockets }}' dies='1' cores='{{ node.vm.cpu_cores }}' threads='{{ node.vm.cpu_threads }}'/>
   </cpu>
   <clock offset='utc'>
     <timer name='rtc' tickpolicy='catchup'/>
@@ -41,14 +41,16 @@
   </pm>
   <devices>
     <emulator>/usr/libexec/qemu-kvm</emulator>
+{% for disk in node.vm.disks %}{% set letters = 'abcdefghijklmnopqrstuvwxyz' %}
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='none'/>
-      <source file='{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2' index='2'/>
+      <source file='{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2' index='{{ loop.index + 1 }}'/>
       <backingStore/>
-      <target dev='vda' bus='virtio'/>
-      <alias name='virtio-disk0'/>
-      <address type='pci' domain='0x0000' bus='0x05' slot='0x00' function='0x0'/>
+      <target dev='vd{{ letters[loop.index0] }}' bus='virtio'/>
+      <alias name='virtio-disk{{ loop.index0 }}'/>
+      <address type='pci' domain='0x0000' bus='0x0{{ loop.index0 + 6 }}' slot='0x00' function='0x0'/>
     </disk>
+{% endfor %}
     <disk type='file' device='cdrom'>
       <driver name='qemu' type='raw'/>
       <source file='{{ libvirt_base_iso_path }}/ocp_ai-{{ cluster_id }}.iso' index='1'/>
@@ -119,7 +121,7 @@
       <alias name='virtio-serial0'/>
       <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
     </controller>
-{% for iface in item.interfaces %}
+{% for iface in node.interfaces %}
     <interface type='bridge'>
       <mac address='{{ iface.mac_address }}'/>
       <source {{ libvirt_network.type }}='{{ libvirt_network.name }}'/>
@@ -153,7 +155,7 @@
       <alias name='video0'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
     </video>
-{% if item.pci_devices is defined %}{% for dev in item.pci_devices %}
+{% if node.pci_devices is defined %}{% for dev in node.pci_devices %}
 {% set expandSemi = dev.split(":") %}{% set busID = expandSemi[0] %}{% set slotID = expandSemi[1].split(".")[0] %}{% set functionID = expandSemi[1].split(".")[1] %}
     <hostdev mode='subsystem' type='pci' managed='yes'>
       <driver name='vfio'/>
@@ -166,7 +168,7 @@
     <rng model='virtio'>
       <backend model='random'>/dev/urandom</backend>
       <alias name='rng0'/>
-      <address type='pci' domain='0x0000' bus='0x06' slot='0x00' function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x05' slot='0x00' function='0x0'/>
     </rng>
   </devices>
   <seclabel type='none'/>
