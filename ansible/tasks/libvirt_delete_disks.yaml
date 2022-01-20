@@ -1,0 +1,9 @@
+---
+- name: "Delete the VM disks for OpenShift Node - {{ node.name }}"
+  file:
+    state: absent
+    path: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2"
+  loop: "{{ node.vm.disks }}"
+  loop_control:
+    loop_var: disk
+    label: "{{ node.name }} @ {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2"

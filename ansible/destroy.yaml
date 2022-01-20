@@ -99,13 +99,11 @@
           label: "Deleting {{ cluster_name }}-{{ item.name }}"
         ignore_errors: yes
 
-      - name: Delete the VM disks
-        file:
-          state: absent
-          path: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+      - name: Delete the VM Disks
+        include_tasks: tasks/libvirt_delete_disks.yaml
         loop: "{{ cluster_nodes }}"
         loop_control:
-          label: "Deleting {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2"
+          loop_var: node
 
       - name: Reattach devices to host system from VMs
         include_tasks: tasks/libvirt_reattach_devices.yaml
