@@ -1,5 +1,7 @@
 # OpenShift 4 Assisted Installer Service, Libvirt Deployer
 
+> ATTENTION: Navigate to the `ansible` directory for up-to-date automation - other assets are used for bootstrapping control nodes or kept for legacy purposes
+
 There are two options to use this source:
 
 1. Ideally, go with the resources in the `ansible` folder, it's more complete and intelligent/idempotent

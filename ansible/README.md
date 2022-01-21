@@ -26,7 +26,61 @@ What this Ansible content will do is the following:
 16. Pull cluster credentials from the AI Svc
 17. Perform cluster post-configuration, anything in `post-tasks/`
 
-## Installing Ansible Collections
+## Prerequisites
+
+Before using this automation you'll need to set up a few things on the Ansible control node
+
+### [One-time] Installing Libvirt & System Packages
+
+There are a few packages required by the automation functions:
+
+```bash
+## Install Libvirt
+sudo dnf module -y install virt
+
+## Install supporting packages
+sudo dnf install -y jq git curl wget virt-install virt-viewer
+```
+
+### [One-time] Installing Pip modules
+
+Some of the Ansible Modules require additional Python Pip modules - install the following:
+
+```bash
+## Install Ansible if needed
+sudo python3 -m pip install ansible paramiko
+
+## Install the Kubernetes and OpenShift modules
+sudo python3 -m pip install kubernetes openshift
+```
+
+### [One-time] Installing oc
+
+There are a few Ansible Tasks that use the `command` module to execute commands best/easiest serviced by the `oc` binary - thusly, `oc` needs to be available in the system path
+
+```bash
+## Create a binary directory if needed
+sudo mkdir -p /usr/local/bin
+sudo echo 'export PATH="/usr/local/bin:$PATH"' > /etc/profile.d/usrlibbin.sh
+sudo chmod a+x /etc/profile.d/usrlibbin.sh
+source /etc/profile.d/usrlibbin.sh
+
+## Download the latest oc binary
+mkdir -p /tmp/bindl
+cd /tmp/bindl
+wget https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/openshift-client-linux.tar.gz
+tar zxvf openshift-client-linux.tar.gz
+
+## Move it to the bin dir
+sudo mv kubectl /usr/local/bin
+sudo mv oc /usr/local/bin
+
+## Clean up
+cd -
+rm -rf /tmp/bindl
+```
+
+### [One-time] Installing Ansible Collections
 
 In order to run this Playbook you'll need to have the needed Ansible Collections already installed - you can do so easily by running the following command:
 
@@ -37,29 +91,7 @@ ansible-galaxy collection install -r requirements.yml
 ## Modify the Variables files
 
 - Copy `example_vars/cluster-config.yaml` to the working directory, ideally with a prefix of the cluster name - modify as needed
-- Modify the other files in `example_vars/` and copy to `vars/` as you see fit, in case you need to add the new cluster to an ACM Hub for instance
-
-## Using the Red Hat Console/Cloud hosted Installer Service
-
-Instead of hosting the Assisted Installer Service yourself, you can use the AI Service hosted online by Red Hat: https://console.redhat.com/openshift/assisted-installer/clusters
-
-To do so with this automation:
-
-1. Get an Offline Token: https://access.redhat.com/management/api
-2. Copy the ` cp example_vars/assisted-service.yaml vars/` 
-3. Modify the `vars/assisted-service.yaml` variable file and define the following:
-
-```yaml
-assisted_service_fqdn: api.openshift.com
-assisted_service_port: 443
-assisted_service_transport: https
-assisted_service_authentication: bearer-token
-assisted_service_authentication_api_bearer_token: yourOfflineToken
-```
-
-*The `bootstrap.yaml` Playbook will swap out the Offline Token for an ephemerial API token.*
-
-4. Make sure the hardware definition of your VMs meets the minimum required by the hosted service
+- Modify the other files in `example_vars/` and copy to `vars/` as you see fit
 
 ## Running the Playbook
 
@@ -68,9 +100,3 @@ With the needed variables altered, you can run the Playbook with the following c
 ```bash
 ansible-playbook -e "@cluster-name.cluster-config.yaml" bootstrap.yaml
 ```
-
-## Available Tags
-
-- `create_libvirt_cluster` - Create the Libvirt VMs, skipping can speed up things if retrying post-provisioning tasks
-- `post_tasks_1` - Default post-cluster provisioning Tasks, adding Matrix Login, NFS StorageClass, NFS for Image Registry, & LDAP IdP
-- `post_tasks_2` - Connect the new cluster to an Advanced Cluster Management Hub
