@@ -1,12 +1,12 @@
 ---
 - name: "Create disk images for OpenShift Node - {{ node.name }}"
-  command: "qemu-img create -f qcow2 {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2 {{ disk.size }}G"
+  command: "qemu-img create {{ (disk.thick is defined and disk.thick|bool) | ternary('-o preallocation=full', '', omit) }} -f qcow2 {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2 {{ disk.size }}G"
   args:
     creates: "{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2"
   loop: "{{ node.vm.disks }}"
   loop_control:
     loop_var: disk
-    label: "{{ node.name }} @ {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2"
+    label: "{{ node.name }} @ {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2, {{ (disk.thick is defined and disk.thick|bool) | ternary('thick', 'thin') }}"
 
 #- name: Create disk images for OpenShift Nodes
 #  command: "qemu-img create -f qcow2 {{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ item.name }}.qcow2 {{ item.vm.disk_size }}G"
