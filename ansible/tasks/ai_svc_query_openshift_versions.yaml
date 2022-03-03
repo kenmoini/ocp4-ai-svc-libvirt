@@ -2,7 +2,7 @@
 - name: Query versions from Assisted Install API
   uri:
     headers: "{{ compiled_uri_headers }}"
-    url: "{{ assisted_service_endpoint }}/openshift_versions"
+    url: "{{ assisted_service_endpoint }}/openshift-versions"
     return_content: yes
     method: GET
     status_code: 200

@@ -6,6 +6,7 @@
 
   vars:
     cluster_id: ""
+    infraenv_id: ""
     cluster_status: ""
     deployment_name: ""
     compiled_uri_headers:
@@ -36,6 +37,14 @@
         return_content: yes
         method: GET
       register: read_clusters
+
+    - name: Read AI Service, check for existing infraenvs
+      uri:
+        headers: "{{ compiled_uri_headers }}"
+        url: "{{ assisted_service_endpoint }}/infra-envs"
+        return_content: yes
+        method: GET
+      register: read_infraenvs
     
     - name: Set facts if cluster exists
       set_fact:
@@ -44,12 +53,25 @@
       loop: "{{ read_clusters.json }}"
       when: (item.base_dns_domain is defined) and ((item.base_dns_domain == cluster_domain) and (item.name == cluster_name))
 
+    - name: Set facts if infraenv exists
+      set_fact:
+        infraenv_id: "{{ item.id }}"
+        infraenv_download_url: "{{ item.download_url }}"
+      loop: "{{ read_infraenvs.json }}"
+      when: (item.cluster_id is defined) and (item.cluster_id == cluster_id) and (item.name == cluster_name)
+
     # y tho? oh yeah, if importing, duh lololo
     - name: Create Cluster Asset Generation Directory
       file:
         path: "{{ generated_asset_directory }}/{{ cluster_id }}"
         state: directory
       when: cluster_id != ""
+
+    - name: Create the infraenv if it does not already exist
+      block:
+        - name: Create the infraenv deployment definition
+          include_tasks: tasks/ai_svc_create_infraenv.yaml
+      when: infraenv_id == ""
 
     - name: Create Cluster if it does not already exist
       block:
@@ -85,14 +107,18 @@
 
         - name: SSH Key Migration
           include_tasks: tasks/ssh_keys.yaml
-
-        - name: Patch in Cluster Preconfiguration for Networking
-          include_tasks: tasks/ai_svc_preconfig_networking.yaml
-
-        - name: Configure ISO Parameters
-          include_tasks: tasks/ai_svc_configure_iso_params.yaml
           
       when: deployment_name != ""
+
+    - name: Inject extra manifests
+      include_tasks: tasks/ai_svc_preconfig_extra_manifests.yaml
+      when: injected_manifests is defined
+
+    - name: Patch in Cluster Preconfiguration for Networking
+      include_tasks: tasks/ai_svc_preconfig_networking.yaml
+
+    - name: Configure ISO Parameters
+      include_tasks: tasks/ai_svc_configure_iso_params.yaml
 
     - name: Download ISO if needed
       block:
@@ -112,6 +138,7 @@
           copy:
             src: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
             dest: "{{ libvirt_base_iso_path }}/ocp_ai-{{ cluster_id }}.iso"
+          become: yes
 
     - name: Set core user password
       block:      
