@@ -48,10 +48,13 @@ Some of the Ansible Modules require additional Python Pip modules - install the 
 
 ```bash
 ## Install Ansible if needed
-sudo python3 -m pip install ansible paramiko
+sudo python3 -m pip install ansible paramiko jmespath
 
 ## Install the Kubernetes and OpenShift modules
 sudo python3 -m pip install kubernetes openshift
+
+## or...
+sudo python3 -m pip install --upgrade -r requirements.txt
 ```
 
 ### [One-time] Installing oc

@@ -67,12 +67,6 @@
         state: directory
       when: cluster_id != ""
 
-    - name: Create the infraenv if it does not already exist
-      block:
-        - name: Create the infraenv deployment definition
-          include_tasks: tasks/ai_svc_create_infraenv.yaml
-      when: infraenv_id == ""
-
     - name: Create Cluster if it does not already exist
       block:
         - name: Set random var for this deployment json run
@@ -105,10 +99,16 @@
             path: "{{ generated_asset_directory }}/deployment-{{ deployment_name }}.json"
             state: absent
 
-        - name: SSH Key Migration
-          include_tasks: tasks/ssh_keys.yaml
-          
       when: deployment_name != ""
+          
+    - name: SSH Key Migration
+      include_tasks: tasks/ssh_keys.yaml
+
+    - name: Create the infraenv if it does not already exist
+      block:
+        - name: Create the infraenv deployment definition
+          include_tasks: tasks/ai_svc_create_infraenv.yaml
+      when: infraenv_id == ""
 
     - name: Inject extra manifests
       include_tasks: tasks/ai_svc_preconfig_extra_manifests.yaml
@@ -130,7 +130,7 @@
         - name: Pull OpenShift ISO if needed
           get_url:
             headers: "{{ compiled_uri_headers }}"
-            url: "{{ assisted_service_endpoint }}/clusters/{{ cluster_id }}/downloads/image"
+            url: "{{ infraenv_download_url }}"
             dest: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
           when: not iso_check.stat.exists
 
