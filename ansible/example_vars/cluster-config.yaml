@@ -119,6 +119,8 @@ cluster_nodes:
           name: boot
         - size: 130
           name: odf
+          # thick: true makes the QCOW thick provisioned, default is thin provisioning
+          thick: true
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:14
@@ -143,6 +145,8 @@ cluster_nodes:
           name: boot
         - size: 130
           name: odf
+          # thick: true makes the QCOW thick provisioned, default is thin provisioning
+          thick: true
     interfaces:
       - name: eth0
         mac_address: 54:52:00:42:69:15
@@ -167,6 +171,8 @@ cluster_nodes:
           name: boot
         - size: 130
           name: odf
+          # thick: true makes the QCOW thick provisioned, default is thin provisioning
+          thick: true
     #pci_devices:
     # A list of strings of PCI devices as reported by `sudo lspci -nn`
     #  - "81:00.0"
