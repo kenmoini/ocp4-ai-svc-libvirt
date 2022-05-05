@@ -10,11 +10,12 @@
   "user_managed_networking": {{ ((cluster_api_vip == 'auto') and (cluster_load_balancer_vip == 'auto')) | ternary('false', 'true') }},
   "vip_dhcp_allocation": {{ ((cluster_api_vip == 'auto') and (cluster_load_balancer_vip == 'auto')) | ternary('true', 'false') }},
   "high_availability_mode": "{{ (cluster_type == 'Standard') | ternary('Full', 'None') }}",
-  "network_type": "OpenShiftSDN",
+  "network_type": "OVNKubernetes",
   "schedulable_masters": false,
   "platform": {
     "type": "baremetal"
   },
+  "ssh_authorized_key": "{{ ssh_public_key }}",
   "ssh_public_key": "{{ ssh_public_key }}",
   "pull_secret": {{ pull_secret }}
 }
