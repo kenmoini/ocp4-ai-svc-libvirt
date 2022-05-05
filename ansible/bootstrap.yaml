@@ -131,6 +131,7 @@
 
     - name: Add Ignition Config Overrides
       include_tasks: tasks/ai_svc_set_ignition_config_overrides.yaml
+      when: ignition_config_override_files is defined and ignition_config_override_files | length > 0
 
     - name: Configure ISO Parameters
       include_tasks: tasks/ai_svc_configure_iso_params.yaml
