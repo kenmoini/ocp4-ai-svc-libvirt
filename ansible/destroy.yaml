@@ -43,13 +43,13 @@
         return_content: yes
         method: GET
       register: read_infraenvs
-    
+
     - name: Set facts if cluster exists
       set_fact:
         cluster_id: "{{ item.id }}"
         cluster_status: "{{ item.status }}"
       loop: "{{ read_clusters.json }}"
-      when: (item.base_dns_domain == cluster_domain) and (item.name == cluster_name)
+      when: (item.base_dns_domain is defined) and (item.base_dns_domain == cluster_domain) and (item.name == cluster_name) and (item.kind == "Cluster")
 
     - name: Set facts if infraenv exists
       set_fact:
@@ -77,6 +77,7 @@
           status_code: 204
         loop: "{{ ai_svc_list_of_hosts.json }}"
         loop_control:
+          label: "Destroying host ID: {{ host_item.id }}"
           loop_var: host_item
 
       - name: Delete the infraenv
@@ -171,3 +172,6 @@
           state: absent
           path: "{{ generated_asset_directory }}/{{ cluster_id }}/"
         when: delete_generated_assets|bool and cluster_id != ""
+      
+      - name: Trim NVMe
+        shell: fstrim -a -v
