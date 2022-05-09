@@ -175,3 +175,13 @@
       
       - name: Trim NVMe
         shell: fstrim -a -v
+      when: hypervisor == "kvm"
+
+    - name: Destroy vSphere Infrastructure
+      block:
+      - name: Create VMs via vSphere
+        include_tasks: tasks/vmware_delete_deployment.yml
+      become: yes
+      tags:
+        - delete_vmware_cluster
+      when: hypervisor == "vmware"

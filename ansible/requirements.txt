@@ -1,3 +1,4 @@
 kubernetes
 openshift
 jmespath
+pyvmomi

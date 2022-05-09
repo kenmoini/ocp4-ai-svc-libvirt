@@ -1,0 +1,18 @@
+---
+- name: Process VMs
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    loop_var: node_item
+  include: vmware_remove_infra.yml
+
+- name: Delete the iso if present
+  community.vmware.vsphere_file:
+    host: '{{ vcenter_fqdn  }}'
+    username: '{{ vcenter_username  }}'
+    password: '{{ vcenter_password  }}'
+    validate_certs: "{{ (skip_ssl_validation == 'true') | ternary('false', 'true') }}"
+    datacenter: "{{ vsphere_datacenter }}"
+    datastore: "{{ vsphere_datastore }}"
+    path: "ISOs/ocp_ai.iso"
+    state: absent
+  ignore_errors: yes

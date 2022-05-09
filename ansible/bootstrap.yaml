@@ -155,6 +155,7 @@
             src: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
             dest: "{{ libvirt_base_iso_path }}/ocp_ai-{{ cluster_id }}.iso"
           become: yes
+          when: hypervisor == "kvm"
 
     - name: Set core user password
       block:      
@@ -200,7 +201,17 @@
       become: yes
       tags:
         - create_libvirt_cluster
-      
+      when: hypervisor == "kvm"
+
+    - name: Create vSphere Infrastructure
+      block:
+      - name: Create VMs via vSphere
+        include_tasks: tasks/vmware_create_vms.yaml
+      become: yes
+      tags:
+        - create_vmware_cluster
+      when: hypervisor == "vmware"
+
     - name: Wait for hosts to report into the Assisted Installer service
       include_tasks: tasks/ai_svc_check_for_hosts.yaml
 
@@ -243,7 +254,7 @@
           task_vm_names: "{{ vm_names }}"
           task_shutdown_vms: "{{ shutdown_vms }}"
       become: yes
-      when: libvirt_watch_for_vm_restart|bool
+      when: libvirt_watch_for_vm_restart|bool and hypervisor == "kvm"
 
     - name: Wait for the cluster to be fully installed
       include_tasks: tasks/ai_svc_check_cluster_install_finished.yaml

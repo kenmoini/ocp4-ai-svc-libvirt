@@ -1,4 +1,4 @@
-# Configure System
+# Qubinode Deployments
 
 Downlaod and extract the qubinode-installer as a non root user.
 
@@ -56,7 +56,7 @@ assisted_service_authentication_api_bearer_token: $(cat ~/token.txt)
 
 
 ################################################### DO NOT EDIT PAST THIS LINE
-assisted_service_api_base: /api/assisted-install/v1
+assisted_service_api_base: /api/assisted-install/v2
 assisted_service_endpoint: "{{ assisted_service_transport }}://{{ assisted_service_fqdn }}:{{ assisted_service_port }}{{ assisted_service_api_base }}"
 EOF
 ```

@@ -1,0 +1,65 @@
+---
+- name: Query vCenter for a connectivity test
+  community.vmware.vmware_datacenter_info:
+    hostname: '{{ vcenter_fqdn }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: "{{ (skip_ssl_validation == 'true') | ternary('false', 'true') }}"
+  register: vcenter_test_info
+
+- name: Fail if the vCenter instance cannot be connected to
+  fail:
+    msg: "Cannot connect to vCenter at {{ vcenter_fqdn }}!"
+  when: vcenter_test_info.datacenter_info | length == 0
+
+- name: Create the ISOs directory on the datacenter/datastore
+  community.vmware.vsphere_file:
+    host: '{{ vcenter_fqdn }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: "{{ (skip_ssl_validation == 'true') | ternary('false', 'true') }}"
+    datacenter: "{{ vsphere_datacenter }}"
+    datastore: "{{ vsphere_datastore }}"
+    path: /ISOs
+    state: directory
+
+- name: Create a VM folder on given datacenter
+  community.vmware.vcenter_folder:
+    hostname: '{{ vcenter_fqdn }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: "{{ (skip_ssl_validation == 'true') | ternary('false', 'true') }}"
+    datacenter_name: "{{ vsphere_datacenter }}"
+    folder_name: "{{ cluster_name }}"
+    folder_type: vm
+    state: present
+
+- name: Delete the previous iso if present
+  community.vmware.vsphere_file:
+    host: '{{ vcenter_fqdn }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: "{{ (skip_ssl_validation == 'true') | ternary('false', 'true') }}"
+    datacenter: "{{ vsphere_datacenter }}"
+    datastore: "{{ vsphere_datastore }}"
+    path: "ISOs/ocp_ai.iso"
+    state: absent
+  ignore_errors: true
+
+- name: Upload Discovery ISO to the target Cluster Host
+  community.vmware.vsphere_copy:
+    hostname: '{{ vcenter_fqdn }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: "{{ (skip_ssl_validation == 'true') | ternary('false', 'true') }}"
+    src: "{{ generated_asset_directory }}/{{ cluster_id }}/ocp_ai.iso"
+    datacenter: "{{ vsphere_datacenter }}"
+    datastore: "{{ vsphere_datastore }}"
+    path: "ISOs/ocp_ai.iso"
+  ignore_errors: true
+
+- name: Process VMs
+  loop: "{{ cluster_nodes }}"
+  loop_control:
+    loop_var: node_item
+  include: vmware_create_infra.yaml

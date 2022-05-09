@@ -1,7 +1,7 @@
 ---
 ################################################## Hypervisor
 # hypervisor: kvm/vmware, will deploy to kvm enviornment or vmware
-hypervisor: kvm 
+hypervisor: vmware 
 
 ################################################## SSH Key Configuration
 # generate_ssh_key: true/false, will generate unique key pair if true
@@ -22,28 +22,28 @@ cluster_version: "4.10"
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,apps,*.apps}.cluster_name.cluster_domain exist
-cluster_name: play-ocp
-cluster_domain: kemo.labs
+cluster_name: ocp4
+cluster_domain: example.com
 
 ################################################## Cluster Networking
 # cluster_network_type = Default, Cilium, or Calico (TODO, only Default and Calico work atm)
 cluster_network_type: Default
 # cluster_api_vip: an IP or "auto"
-cluster_api_vip: 192.168.42.74
+cluster_api_vip: 192.168.200.10
 # cluster_load_balancer_vip: an IP or "auto"
-cluster_load_balancer_vip: 192.168.42.75
+cluster_load_balancer_vip: 192.168.200.11
 # cluster_node_cidr: A CIDR definition or "auto"
-cluster_node_cidr: 192.168.42.0/24
+cluster_node_cidr: 192.168.200.0/24
 
 ################################################## Cluster Node IPAM
 # cluster_node_network_ipam: dhcp or static
 cluster_node_network_ipam: static
 ######################### If cluster_node_network_ipam == static:
 cluster_node_network_static_dns_servers:
-  - 192.168.42.9
-  - 192.168.42.10
+  - 192.168.200.4
+  - 192.168.100.4
 cluster_node_network_static_dns_search_domains:
-  - kemo.labs
+  - example.com
 cluster_nodes:
   - name: cp-1
     type: control-plane
@@ -56,16 +56,28 @@ cluster_nodes:
         - size: 130
           name: boot
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:11
+      - name: ens192
+        mac_address: 00:50:56:53:14:02
         dhcp: false
         ipv4:
-          - address: 192.168.42.90
+          - address: 192.168.200.90
             prefix: 24
+        vsphere_network: VLAN200
+      - name: ens224
+        mac_address: 00:50:56:0b:4e:ae
+        dhcp: false
+        ipv4:
+          - address: 192.168.100.90
+            prefix: 24
+        vsphere_network: VLAN100
         routes:
+          - destination: 192.168.200.0/24
+            next_hop_address: 192.168.200.1
+            next_hop_interface: ens192
+            table_id: 253
           - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+            next_hop_address: 192.168.100.1
+            next_hop_interface: ens224
             table_id: 254
   - name: cp-2
     type: control-plane
@@ -78,16 +90,28 @@ cluster_nodes:
         - size: 130
           name: boot
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:12
+      - name: ens192
+        mac_address: 00:50:56:95:0e:04
         dhcp: false
         ipv4:
-          - address: 192.168.42.91
+          - address: 192.168.200.91
             prefix: 24
+        vsphere_network: VLAN200
+      - name: ens224
+        mac_address: 00:50:56:96:ac:19
+        dhcp: false
+        ipv4:
+          - address: 192.168.100.91
+            prefix: 24
+        vsphere_network: VLAN100
         routes:
+          - destination: 192.168.200.0/24
+            next_hop_address: 192.168.200.1
+            next_hop_interface: ens192
+            table_id: 253
           - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+            next_hop_address: 192.168.100.1
+            next_hop_interface: ens224
             table_id: 254
   - name: cp-3
     type: control-plane
@@ -100,16 +124,28 @@ cluster_nodes:
         - size: 130
           name: boot
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:13
+      - name: ens192
+        mac_address: 00:0c:29:24:93:60
         dhcp: false
         ipv4:
-          - address: 192.168.42.92
+          - address: 192.168.200.92
             prefix: 24
+        vsphere_network: VLAN200
+      - name: ens224
+        mac_address: 00:50:56:dc:25:c2
+        dhcp: false
+        ipv4:
+          - address: 192.168.100.92
+            prefix: 24
+        vsphere_network: VLAN100
         routes:
+          - destination: 192.168.200.0/24
+            next_hop_address: 192.168.200.1
+            next_hop_interface: ens192
+            table_id: 253
           - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+            next_hop_address: 192.168.100.1
+            next_hop_interface: ens224
             table_id: 254
   - name: app-1
     type: application-node
@@ -126,16 +162,28 @@ cluster_nodes:
           # thick: true makes the QCOW thick provisioned, default is thin provisioning
           thick: true
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:14
+      - name: ens192
+        mac_address: 00:0c:29:71:74:00
         dhcp: false
         ipv4:
-          - address: 192.168.42.93
+          - address: 192.168.200.93
             prefix: 24
+        vsphere_network: VLAN200
+      - name: ens224
+        mac_address: 00:50:56:4b:7c:82
+        dhcp: false
+        ipv4:
+          - address: 192.168.100.93
+            prefix: 24
+        vsphere_network: VLAN100
         routes:
+          - destination: 192.168.200.0/24
+            next_hop_address: 192.168.200.1
+            next_hop_interface: ens192
+            table_id: 253
           - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+            next_hop_address: 192.168.100.1
+            next_hop_interface: ens224
             table_id: 254
   - name: app-2
     type: application-node
@@ -152,16 +200,28 @@ cluster_nodes:
           # thick: true makes the QCOW thick provisioned, default is thin provisioning
           thick: true
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:15
+      - name: ens192
+        mac_address: 00:50:56:35:79:dd
         dhcp: false
         ipv4:
-          - address: 192.168.42.94
+          - address: 192.168.200.94
             prefix: 24
+        vsphere_network: VLAN200
+      - name: ens224
+        mac_address: 00:50:56:8c:58:26
+        dhcp: false
+        ipv4:
+          - address: 192.168.100.94
+            prefix: 24
+        vsphere_network: VLAN100
         routes:
+          - destination: 192.168.200.0/24
+            next_hop_address: 192.168.200.1
+            next_hop_interface: ens192
+            table_id: 253
           - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+            next_hop_address: 192.168.100.1
+            next_hop_interface: ens224
             table_id: 254
   - name: app-3
     type: application-node
@@ -184,16 +244,28 @@ cluster_nodes:
     #  - "81:00.2"
     #  - "81:00.3"
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:16
+      - name: ens192
+        mac_address: 00:50:56:b9:85:06
         dhcp: false
         ipv4:
-          - address: 192.168.42.95
+          - address: 192.168.200.95
             prefix: 24
+        vsphere_network: VLAN200
+      - name: ens224
+        mac_address: 00:50:56:90:eb:19
+        dhcp: false
+        ipv4:
+          - address: 192.168.100.95
+            prefix: 24
+        vsphere_network: VLAN100
         routes:
+          - destination: 192.168.200.0/24
+            next_hop_address: 192.168.200.1
+            next_hop_interface: ens192
+            table_id: 253
           - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+            next_hop_address: 192.168.100.1
+            next_hop_interface: ens224
             table_id: 254
 
 # extra_roles [optional]: name roles to run after cluster provisioning

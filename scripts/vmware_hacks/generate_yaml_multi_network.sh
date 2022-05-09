@@ -1,7 +1,21 @@
+#!/bin/bash 
+export OC_VERSION="4.10"
+export CLUSTER_NAME="ice-ocp4"
+export CLUSTER_BASE_DNS="rto-multinet.com"
+export DNS1=" 192.168.200.4"
+export DNS2="1.1.1.1"
+export VMNETWORK_ONE="VLAN200"
+export VMNETWORK_TWO="VLAN100"
+export CLUSTER_OCTECT="192.168.200"
+export CLUSTER_API_VIP=" ${CLUSTER_OCTECT}.10"
+export CLUSTER_INGRESS_VIP=" ${CLUSTER_OCTECT}.11"
+export CLUSTER_OCTECT_TWO="192.168.100"
+
+cat >vars/cluster-config.yaml<<EOF
 ---
 ################################################## Hypervisor
 # hypervisor: kvm/vmware, will deploy to kvm enviornment or vmware
-hypervisor: kvm 
+hypervisor: vmware 
 
 ################################################## SSH Key Configuration
 # generate_ssh_key: true/false, will generate unique key pair if true
@@ -18,32 +32,32 @@ pull_secret: "{{ lookup('file', '~/pull-secret.txt') | to_json }}"
 ################################################## Cluster Basics
 # cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
 cluster_type: Standard
-cluster_version: "4.10"
+cluster_version: "${OC_VERSION}"
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,apps,*.apps}.cluster_name.cluster_domain exist
-cluster_name: play-ocp
-cluster_domain: kemo.labs
+cluster_name: ${CLUSTER_NAME}
+cluster_domain: ${CLUSTER_BASE_DNS}
 
 ################################################## Cluster Networking
 # cluster_network_type = Default, Cilium, or Calico (TODO, only Default and Calico work atm)
 cluster_network_type: Default
 # cluster_api_vip: an IP or "auto"
-cluster_api_vip: 192.168.42.74
+cluster_api_vip: ${CLUSTER_API_VIP}
 # cluster_load_balancer_vip: an IP or "auto"
-cluster_load_balancer_vip: 192.168.42.75
+cluster_load_balancer_vip: ${CLUSTER_INGRESS_VIP}
 # cluster_node_cidr: A CIDR definition or "auto"
-cluster_node_cidr: 192.168.42.0/24
+cluster_node_cidr:  ${CLUSTER_OCTECT}.0/24
 
 ################################################## Cluster Node IPAM
 # cluster_node_network_ipam: dhcp or static
 cluster_node_network_ipam: static
 ######################### If cluster_node_network_ipam == static:
 cluster_node_network_static_dns_servers:
-  - 192.168.42.9
-  - 192.168.42.10
+  - ${DNS1}
+  - ${DNS2}
 cluster_node_network_static_dns_search_domains:
-  - kemo.labs
+  - ${CLUSTER_BASE_DNS}
 cluster_nodes:
   - name: cp-1
     type: control-plane
@@ -56,17 +70,29 @@ cluster_nodes:
         - size: 130
           name: boot
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:11
+      - name: ens192
+        mac_address: $(bash mac_generator.sh)
         dhcp: false
         ipv4:
-          - address: 192.168.42.90
+          - address:  ${CLUSTER_OCTECT}.90
             prefix: 24
+        vsphere_network: ${VMNETWORK_ONE}
+      - name: ens224
+        mac_address: $(bash mac_generator.sh)
+        dhcp: false
+        ipv4:
+          - address:  ${CLUSTER_OCTECT_TWO}.90
+            prefix: 24
+        vsphere_network: ${VMNETWORK_TWO}
         routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+          - destination:  ${CLUSTER_OCTECT}.0/24
+            next_hop_address:  ${CLUSTER_OCTECT}.1
+            next_hop_interface: ens192
             table_id: 254
+          - destination: 0.0.0.0/0
+            next_hop_address:  ${CLUSTER_OCTECT_TWO}.1
+            next_hop_interface: ens224
+            table_id: 253
   - name: cp-2
     type: control-plane
     vm:
@@ -78,17 +104,29 @@ cluster_nodes:
         - size: 130
           name: boot
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:12
+      - name: ens192
+        mac_address: $(bash mac_generator.sh)
         dhcp: false
         ipv4:
-          - address: 192.168.42.91
+          - address:  ${CLUSTER_OCTECT}.91
             prefix: 24
+        vsphere_network: ${VMNETWORK_ONE}
+      - name: ens224
+        mac_address: $(bash mac_generator.sh)
+        dhcp: false
+        ipv4:
+          - address:  ${CLUSTER_OCTECT_TWO}.91
+            prefix: 24
+        vsphere_network: ${VMNETWORK_TWO}
         routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+          - destination:  ${CLUSTER_OCTECT}.0/24
+            next_hop_address:  ${CLUSTER_OCTECT}.1
+            next_hop_interface: ens192
             table_id: 254
+          - destination: 0.0.0.0/0
+            next_hop_address:  ${CLUSTER_OCTECT_TWO}.1
+            next_hop_interface: ens224
+            table_id: 253
   - name: cp-3
     type: control-plane
     vm:
@@ -100,17 +138,29 @@ cluster_nodes:
         - size: 130
           name: boot
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:13
+      - name: ens192
+        mac_address: $(bash mac_generator.sh)
         dhcp: false
         ipv4:
-          - address: 192.168.42.92
+          - address:  ${CLUSTER_OCTECT}.92
             prefix: 24
+        vsphere_network: ${VMNETWORK_ONE}
+      - name: ens224
+        mac_address: $(bash mac_generator.sh)
+        dhcp: false
+        ipv4:
+          - address:  ${CLUSTER_OCTECT_TWO}.92
+            prefix: 24
+        vsphere_network: ${VMNETWORK_TWO}
         routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+          - destination:  ${CLUSTER_OCTECT}.0/24
+            next_hop_address:  ${CLUSTER_OCTECT}.1
+            next_hop_interface: ens192
             table_id: 254
+          - destination: 0.0.0.0/0
+            next_hop_address:  ${CLUSTER_OCTECT_TWO}.1
+            next_hop_interface: ens224
+            table_id: 253
   - name: app-1
     type: application-node
     vm:
@@ -126,17 +176,29 @@ cluster_nodes:
           # thick: true makes the QCOW thick provisioned, default is thin provisioning
           thick: true
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:14
+      - name: ens192
+        mac_address: $(bash mac_generator.sh)
         dhcp: false
         ipv4:
-          - address: 192.168.42.93
+          - address:  ${CLUSTER_OCTECT}.93
             prefix: 24
+        vsphere_network: ${VMNETWORK_ONE}
+      - name: ens224
+        mac_address: $(bash mac_generator.sh)
+        dhcp: false
+        ipv4:
+          - address:  ${CLUSTER_OCTECT_TWO}.93
+            prefix: 24
+        vsphere_network: ${VMNETWORK_TWO}
         routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+          - destination:  ${CLUSTER_OCTECT}.0/24
+            next_hop_address:  ${CLUSTER_OCTECT}.1
+            next_hop_interface: ens192
             table_id: 254
+          - destination: 0.0.0.0/0
+            next_hop_address:  ${CLUSTER_OCTECT_TWO}.1
+            next_hop_interface: ens224
+            table_id: 253
   - name: app-2
     type: application-node
     vm:
@@ -152,17 +214,29 @@ cluster_nodes:
           # thick: true makes the QCOW thick provisioned, default is thin provisioning
           thick: true
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:15
+      - name: ens192
+        mac_address: $(bash mac_generator.sh)
         dhcp: false
         ipv4:
-          - address: 192.168.42.94
+          - address:  ${CLUSTER_OCTECT}.94
             prefix: 24
+        vsphere_network: ${VMNETWORK_ONE}
+      - name: ens224
+        mac_address: $(bash mac_generator.sh)
+        dhcp: false
+        ipv4:
+          - address:  ${CLUSTER_OCTECT_TWO}.94
+            prefix: 24
+        vsphere_network: ${VMNETWORK_TWO}
         routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+          - destination:  ${CLUSTER_OCTECT}.0/24
+            next_hop_address:  ${CLUSTER_OCTECT}.1
+            next_hop_interface: ens192
             table_id: 254
+          - destination: 0.0.0.0/0
+            next_hop_address:  ${CLUSTER_OCTECT_TWO}.1
+            next_hop_interface: ens224
+            table_id: 253
   - name: app-3
     type: application-node
     vm:
@@ -177,24 +251,30 @@ cluster_nodes:
           name: odf
           # thick: true makes the QCOW thick provisioned, default is thin provisioning
           thick: true
-    #pci_devices:
-    # A list of strings of PCI devices as reported by `sudo lspci -nn`
-    #  - "81:00.0"
-    #  - "81:00.1"
-    #  - "81:00.2"
-    #  - "81:00.3"
     interfaces:
-      - name: eth0
-        mac_address: 54:52:00:42:69:16
+      - name: ens192
+        mac_address: $(bash mac_generator.sh)
         dhcp: false
         ipv4:
-          - address: 192.168.42.95
+          - address:  ${CLUSTER_OCTECT}.95
             prefix: 24
+        vsphere_network: ${VMNETWORK_ONE}
+      - name: ens224
+        mac_address: $(bash mac_generator.sh)
+        dhcp: false
+        ipv4:
+          - address:  ${CLUSTER_OCTECT_TWO}.95
+            prefix: 24
+        vsphere_network: ${VMNETWORK_TWO}
         routes:
-          - destination: 0.0.0.0/0
-            next_hop_address: 192.168.42.1
-            next_hop_interface: eth0
+          - destination:  ${CLUSTER_OCTECT}.0/24
+            next_hop_address:  ${CLUSTER_OCTECT}.1
+            next_hop_interface: ens192
             table_id: 254
+          - destination: 0.0.0.0/0
+            next_hop_address:  ${CLUSTER_OCTECT_TWO}.1
+            next_hop_interface: ens224
+            table_id: 253
 
 # extra_roles [optional]: name roles to run after cluster provisioning
 #extra_roles:
@@ -263,3 +343,11 @@ additionalTrustBundles: |
   7yx0UiBuGVfG66I09YM1jR9nq7mKv30Sq1Fa/X76XyxDBGk0rLRCw02Ziq0rS8WG
   S5kIfhw8FM52x6RHCwRicArO8HSTCf4ueEkFL7yj5xSI
   -----END CERTIFICATE-----
+EOF
+
+
+cat vars/cluster-config.yaml
+echo "*********************************************************"
+echo "*********************************************************"
+echo "*********************************************************"
+sudo ansible-playbook -e "vars/cluster-config.yaml" bootstrap.yaml  --ask-vault-pass  -vvv

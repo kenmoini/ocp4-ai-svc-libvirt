@@ -1,0 +1,51 @@
+---
+
+- name: Setup VMWare disk dictionary
+  set_fact:
+    disks: "{{ disks | default([]) + [{ 'size_gb' : disk_item.size, 'type' : 'thin' }] }}"
+  loop: "{{ node_item.vm.disks }}"
+  loop_control:
+    loop_var: disk_item
+
+- name: Setup VMWare network dictionary
+  set_fact:
+    networks: "{{ networks | default([]) + [{ 'name' : vsphere_network, 'device_type' : 'vmxnet3', 'mac' : iface_item.mac_address }] }}"
+  loop: "{{ node_item.interfaces }}"
+  loop_control:
+    loop_var: iface_item
+
+- name: Setup Agent Names
+  set_fact:
+    agent_names: "{{ agent_names | default([]) + [node_item.name] }}"
+
+- name: Create VM
+  community.vmware.vmware_guest:
+    hostname: '{{ vcenter_fqdn }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: "{{ (skip_ssl_validation == 'true') | ternary('false', 'true') }}"
+    datacenter: "{{ vsphere_datacenter }}"
+    datastore: "{{ vsphere_datastore }}"
+    cluster: "{{ vsphere_cluster }}"
+    name: "{{ cluster_name }}-{{ node_item.name }}"
+    folder: "{{ cluster_name }}"
+    guest_id: coreos64Guest
+    state: powered-on
+    disk: "{{ disks }}"
+    hardware:
+      memory_mb: "{{ node_item.vm.memory }}"
+      num_cpu_cores_per_socket : "{{ node_item.vm.cpu_cores }}"
+      num_cpus : "{{ (node_item.vm.cpu_sockets|int * node_item.vm.cpu_cores|int) }}"
+    cdrom:
+    - controller_number: 0
+      unit_number: 0
+      state: present
+      type: iso
+      iso_path: "[{{ vsphere_datastore }}] ISOs/ocp_ai.iso"
+    networks: "{{ networks }}"
+
+- name: Resetting Facts
+  set_fact:
+    networks: []
+    disks: []
+    agent_names: []

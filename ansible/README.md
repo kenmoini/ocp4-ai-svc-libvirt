@@ -30,7 +30,7 @@ What this Ansible content will do is the following:
 
 Before using this automation you'll need to set up a few things on the Ansible control node
 
-### [One-time] Installing Libvirt & System Packages
+## [One-time] Installing Libvirt & System Packages
 
 There are a few packages required by the automation functions:
 
@@ -42,7 +42,13 @@ sudo dnf module -y install virt
 sudo dnf install -y jq git curl wget virt-install virt-viewer
 ```
 
+### [One-time] Installing for vSphere deployments
+
 ### [One-time] Installing Pip modules
+```
+sudo subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
+sudo dnf install jq ansible python3 -y
+```
 
 Some of the Ansible Modules require additional Python Pip modules - install the following:
 
@@ -88,12 +94,13 @@ rm -rf /tmp/bindl
 In order to run this Playbook you'll need to have the needed Ansible Collections already installed - you can do so easily by running the following command:
 
 ```bash
+cd ansible
 ansible-galaxy collection install -r requirements.yml
 ```
 
 ## Modify the Variables files
 
-- Copy `example_vars/cluster-config.yaml` to the working directory, ideally with a prefix of the cluster name - modify as needed
+- Copy `cp example_vars/cluster-config.yaml vars/cluster-config.yaml` to the working directory, ideally with a prefix of the cluster name - modify as needed
 - Modify the other files in `example_vars/` and copy to `vars/` as you see fit
 
 ## Running the Playbook
