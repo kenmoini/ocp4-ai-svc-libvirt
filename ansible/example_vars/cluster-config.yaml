@@ -14,7 +14,7 @@ pull_secret: "{{ lookup('file', '~/pull-secret.txt') | to_json }}"
 ################################################## Cluster Basics
 # cluster_type: Standard (HA CP+App Nodes), SNO (Single Node OpenShift)
 cluster_type: Standard
-cluster_version: 4.9
+cluster_version: "4.10"
 
 # cluster_name and cluster_domain will form the cluster base endpoint, eg cluster_name.cluster_domain
 # Ensure the DNS A records for {api,api-int,apps,*.apps}.cluster_name.cluster_domain exist
