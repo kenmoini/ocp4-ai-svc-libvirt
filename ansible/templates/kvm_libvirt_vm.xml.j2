@@ -39,11 +39,12 @@
     <suspend-to-mem enabled='no'/>
     <suspend-to-disk enabled='no'/>
   </pm>
+  <iothreads>1</iothreads>
   <devices>
     <emulator>/usr/libexec/qemu-kvm</emulator>
 {% for disk in node.vm.disks %}{% set letters = 'abcdefghijklmnopqrstuvwxyz' %}
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' cache='none'/>
+      <driver name='qemu' type='qcow2' cache='none' iothread="1" queues="8"/>
       <source file='{{ libvirt_base_vm_path }}/{{ cluster_name }}-{{ node.name }}-{{ disk.name }}.qcow2' index='{{ loop.index + 1 }}'/>
       <backingStore/>
       <target dev='vd{{ letters[loop.index0] }}' bus='virtio'/>
@@ -122,7 +123,7 @@
       <address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
     </controller>
 {% for iface in node.interfaces %}
-    <interface type='bridge'>
+    <interface type='{{ libvirt_network.type }}'>
       <mac address='{{ iface.mac_address }}'/>
       <source {{ libvirt_network.type }}='{{ libvirt_network.name }}'/>
       <model type='{{ libvirt_network.model }}'/>
