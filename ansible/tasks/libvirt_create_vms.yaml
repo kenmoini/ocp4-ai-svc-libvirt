@@ -1,4 +1,9 @@
 ---
+
+- name: Get Running VMs
+  shell: "virsh list --state-running --name"
+  register: running_vm_check_cmd
+
 - name: Template Libvirt VM XML files for debug purposes
   template:
     src: templates/kvm_libvirt_vm.xml.j2
@@ -17,6 +22,7 @@
   loop_control:
     loop_var: node
     label: "{{ node.name }}"
+  when: (cluster_name + '-' + node.name) not in running_vm_check_cmd.stdout_lines
 
 - name: Boot the OpenShift VMs
   community.libvirt.virt:
@@ -27,3 +33,4 @@
   loop_control:
     loop_var: node
     label: "{{ node.name }}"
+  when: (cluster_name + '-' + node.name) not in running_vm_check_cmd.stdout_lines
