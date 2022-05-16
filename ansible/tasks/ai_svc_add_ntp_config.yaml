@@ -1,7 +1,18 @@
 ---
+- name: Set facts for an empty list
+  set_fact:
+    target_sources: []
+
+- name: Add set NTP Sources just by the address
+  set_fact:
+    target_sources: "{{ target_sources + [source.address] }}"
+  loop: "{{ ntp_sources }}"
+  loop_control:
+    loop_var: source
+
 - name: Combine no proxy list
   set_fact:
-    cluster_ntp_sources: "{{ ntp_sources | join(',') }}"
+    cluster_ntp_sources: "{{ target_sources | join(',') }}"
 
 - name: Set body data
   set_fact:

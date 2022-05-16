@@ -194,8 +194,12 @@ cluster_nodes:
 
 # extra_roles [optional]: name roles to run after cluster provisioning
 #extra_roles:
+#- ocp4-matrix-login
+#- ocp4-rhsm-entitlement
 #- ocp-operators-deploy-nfd
 #- ocp-operators-deploy-gpu-operator
+#- ocp4-certificates
+#- ocp4-ntp-configuration
 
 ################################################## DO NOT EDIT PAST THIS LINE (unless you know what you're doing)
 cluster_network_cidr: 10.128.0.0/14
@@ -206,10 +210,19 @@ cluster_skip_verify_tls: true
 
 generated_asset_directory: ./.generated
 
+#######################################################################################################################
+## OpenShift Assisted Installer Service additionalNTPSources & ocp4-ntp-configuration role needed variables
+#######################################################################################################################
 # optional: if you want to use a different NTP server to synchronize time
 #ntp_sources:
-#  - 192.168.51.1
+#  - type: server
+#    address: 192.168.51.1
+#  - type: pool
+#    address: 0.rhel.pool.ntp.org
 
+#######################################################################################################################
+## OpenShift Assisted Installer Service proxy configuration
+#######################################################################################################################
 # optional: if you need to use an outbound proxy for the cluster
 #cluster_proxy:
 #  httpProxy: http://192.168.51.1:3128/
@@ -218,6 +231,15 @@ generated_asset_directory: ./.generated
 #  - 192.168.51.0/24
 #  - api-int.core-ocp.lab.kemo.network
 #  - api.core-ocp.lab.kemo.network
+
+#######################################################################################################################
+## ocp4-certificates role needed variables
+#######################################################################################################################
+#cluster_api_lb_tls_crt: "{{ lookup('file', '/opt/core-ocp.lab.kemo.network.full-chain.cert.pem') }}"
+#cluster_api_lb_tls_key: "{{ lookup('file', '/opt/core-ocp.lab.kemo.network.key.pem') }}"
+
+#cluster_app_lb_tls_crt: "{{ lookup('file', '/opt/core-ocp.lab.kemo.network.full-chain.cert.pem') }}"
+#cluster_app_lb_tls_key: "{{ lookup('file', '/opt/core-ocp.lab.kemo.network.key.pem') }}"
 
 additionalTrustBundles: |
   -----BEGIN CERTIFICATE-----
@@ -259,3 +281,39 @@ additionalTrustBundles: |
   7yx0UiBuGVfG66I09YM1jR9nq7mKv30Sq1Fa/X76XyxDBGk0rLRCw02Ziq0rS8WG
   S5kIfhw8FM52x6RHCwRicArO8HSTCf4ueEkFL7yj5xSI
   -----END CERTIFICATE-----
+
+
+#######################################################################################################################
+## OpenShift Assisted Installer Service Extra Injected Manifests
+#######################################################################################################################
+injected_manifests:
+- name: cluster-admin-rbacs.yaml
+  folder: manifests
+  content: |
+    kind: ClusterRoleBinding
+    apiVersion: rbac.authorization.k8s.io/v1
+    metadata:
+      name: rhatter-cluster-admins
+    subjects:
+      - kind: User
+        apiGroup: rbac.authorization.k8s.io
+        name: kmoini@redhat.com
+      - kind: User
+        apiGroup: rbac.authorization.k8s.io
+        name: takinosh@redhat.com
+      - kind: User
+        apiGroup: rbac.authorization.k8s.io
+        name: dtrapani@redhat.com
+      - kind: User
+        apiGroup: rbac.authorization.k8s.io
+        name: msolberg@redhat.com
+      - kind: User
+        apiGroup: rbac.authorization.k8s.io
+        name: mcostell@redhat.com
+      - kind: User
+        apiGroup: rbac.authorization.k8s.io
+        name: nkendyal@redhat.com
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: cluster-admin
