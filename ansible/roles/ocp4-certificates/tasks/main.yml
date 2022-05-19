@@ -1,6 +1,6 @@
 ---
 # tasks file for ocp4-certificates
-- name: Cluster authentication traps
+- name: Cluster authentication tasks
   block:
 
 ## ===================================================================================================
@@ -13,16 +13,9 @@
       merge_type:
       - strategic-merge
       - merge
-      definition:
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: "root-certificate-bundle"
-          namespace: "openshift-config"
-        stringData:
-          "ca-bundle.crt": |
-            {{ additionalTrustBundles }}
+      definition: "{{ lookup('template', 'templates/additionalTrustBundleConfigMap.yaml.j2') | from_yaml }}"
     when: additionalTrustBundles is defined
+
 
   - name: Create Secret for API LoadBalancer
     kubernetes.core.k8s:
@@ -36,6 +29,7 @@
         metadata:
           name: "{{ cluster_api_lb_secret_name }}"
           namespace: "{{ cluster_api_lb_secret_namespace }}"
+        type: kubernetes.io/tls
         stringData:
           "tls.crt": |
             {{ cluster_api_lb_tls_crt }}
@@ -55,6 +49,7 @@
         metadata:
           name: "{{ cluster_app_lb_secret_name }}"
           namespace: "{{ cluster_app_lb_secret_namespace }}"
+        type: kubernetes.io/tls
         stringData:
           "tls.crt": |
             {{ cluster_app_lb_tls_crt }}
@@ -76,7 +71,7 @@
         apiVersion: config.openshift.io/v1
         kind: Proxy
         metadata:
-          name: proxy
+          name: cluster
         spec:
           trustedCA:
             name: root-certificate-bundle
